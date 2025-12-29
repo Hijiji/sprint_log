@@ -42,6 +42,19 @@ lerna-debug.log*
 .env.production.local
 .env.local
 
+# Environment files (keep .example for reference)
+.env.development
+.env.production
+
+# Logs
+logs/
+*.log
+
+# Database
+/data
+*.sqlite
+*.sqlite3
+
 # temp directory
 .temp
 .tmp
