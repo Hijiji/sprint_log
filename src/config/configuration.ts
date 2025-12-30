@@ -13,7 +13,7 @@ export default () => ({
     dir: process.env.LOG_DIR || './logs',
   },
   jwt: {
-    secret: process.env.JWT_SECRET || 'change-me',
+    secret: process.env.JWT_SECRET,
     expiration: process.env.JWT_EXPIRATION || '7d',
   },
 });

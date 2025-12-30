@@ -12,6 +12,11 @@ export const validationSchema = Joi.object({
     .valid('error', 'warn', 'info', 'debug')
     .default('info'),
   LOG_DIR: Joi.string().default('./logs'),
-  JWT_SECRET: Joi.string().required(),
+  // 운영(production)에서는 반드시 필요하도록 조건부 설정
+  JWT_SECRET: Joi.alternatives().conditional('NODE_ENV', {
+    is: 'production',
+    then: Joi.string().required(),
+    otherwise: Joi.string().allow('', null),
+  }),
   JWT_EXPIRATION: Joi.string().default('7d'),
 });
