@@ -1,3 +1,4 @@
+import { Sprint } from 'src/database/entities/sprint.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -5,32 +6,36 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  ManyToOne,
 } from 'typeorm';
 
-@Entity('users')
+@Entity('members')
 @Index(['email'], { unique: true })
-export class User {
+export class Member {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  memberId: string;
 
   @Column({ type: 'varchar', length: 100 })
   name: string;
 
+  @Column({ type: 'varchar', length: 100 })
+  team: string;
+
+  @Column({ type: 'boolean', default: true })
+  isEmployed: boolean;
+
   @Column({ type: 'varchar', length: 255, unique: true })
   email: string;
 
-  @Column({ type: 'varchar', length: 255 })
-  password: string;
-
   @Column({ type: 'text', nullable: true })
   description: string;
-
-  @Column({ type: 'boolean', default: true })
-  isActive: boolean;
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @ManyToOne(() => Sprint, (sprint) => sprint.members)
+  sprint: Sprint;
 }

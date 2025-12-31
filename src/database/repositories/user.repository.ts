@@ -1,33 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from '../entities/user.entity';
+import { Member } from '../entities/member.entity';
 
 @Injectable()
 export class UserRepository {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    @InjectRepository(Member)
+    private readonly userRepository: Repository<Member>,
   ) {}
 
-  async findAll(): Promise<User[]> {
+  async findAll(): Promise<Member[]> {
     return this.userRepository.find();
   }
 
-  async findById(id: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { id } });
+  async findById(memberId: string): Promise<Member | null> {
+    return this.userRepository.findOne({ where: { memberId } });
   }
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string): Promise<Member | null> {
     return this.userRepository.findOne({ where: { email } });
   }
 
-  async create(userData: Partial<User>): Promise<User> {
+  async create(userData: Partial<Member>): Promise<Member> {
     const user = this.userRepository.create(userData);
     return this.userRepository.save(user);
   }
 
-  async update(id: string, userData: Partial<User>): Promise<User> {
+  async update(id: string, userData: Partial<Member>): Promise<Member> {
     await this.userRepository.update(id, userData);
     return this.findById(id);
   }
@@ -37,7 +37,7 @@ export class UserRepository {
     return result.affected > 0;
   }
 
-  async findActive(): Promise<User[]> {
-    return this.userRepository.find({ where: { isActive: true } });
+  async findActive(): Promise<Member[]> {
+    return this.userRepository.find({ where: { isEmployed: true } });
   }
 }
