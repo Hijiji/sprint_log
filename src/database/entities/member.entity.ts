@@ -6,8 +6,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  OneToMany,
   ManyToOne,
+  OneToOne,
 } from 'typeorm';
+import { SprintManagerLink } from './sprint-manager-links.entity';
+import { Task } from './task.entity';
+import { WorkLog } from './worklog.entity';
 
 @Entity('members')
 @Index(['email'], { unique: true })
@@ -36,6 +41,15 @@ export class Member {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => Sprint, (sprint) => sprint.members)
-  sprint: Sprint;
+  @OneToMany(
+    () => SprintManagerLink,
+    (sprintManagerLink) => sprintManagerLink.member,
+  )
+  sprintManagerLinks: SprintManagerLink[];
+
+  @ManyToOne(() => Task, (task) => task.members)
+  tasks: Task;
+
+  @OneToOne(() => WorkLog, (worklog) => worklog.member)
+  worklog: WorkLog;
 }

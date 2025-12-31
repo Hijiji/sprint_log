@@ -1,9 +1,11 @@
 import { Member } from 'src/database/entities/member.entity';
-import { SprintStatus } from 'src/enum/sprint.enum';
+import { SprintStatusEnum } from 'src/enum/sprint-status.enum';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { SprintManagerLink } from './sprint-manager-links.entity';
+import { Task } from './task.entity';
+import { WorkLog } from './worklog.entity';
 
 @Entity('sprints')
-@Index()
 export class Sprint {
   @PrimaryGeneratedColumn('uuid')
   sprintId: string;
@@ -32,9 +34,18 @@ export class Sprint {
   @Column({ type: 'timestamp' })
   createdAt: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'boolean' })
   isDeleted: boolean;
 
-  @OneToMany(() => Member, (member) => member.sprint)
-  members: Member[];
+  @OneToMany(
+    () => SprintManagerLink,
+    (sprintManagerLinks) => sprintManagerLinks.sprint,
+  )
+  sprintManagerLinks: SprintManagerLink[];
+
+  @OneToMany(() => Task, (task) => task.sprint)
+  tasks: Task[];
+
+  @OneToMany(() => WorkLog, (worklog) => worklog.sprint)
+  worklog: WorkLog[];
 }
