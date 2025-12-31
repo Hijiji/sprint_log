@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import configuration from './config/configuration';
 import { validationSchema } from './config/validation';
+import { SprintModule } from './sprint/sprint.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { validationSchema } from './config/validation';
       },
     }),
     DatabaseModule,
+    SprintModule,
   ],
   controllers: [AppController],
   providers: [AppService],
