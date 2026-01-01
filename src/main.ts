@@ -1,3 +1,4 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -17,6 +18,15 @@ async function bootstrap() {
   // 로거 설정
   const logger = createLogger(loggingConfig.dir, loggingConfig.level);
   app.useLogger(logger);
+
+  // 전역 Validation 파이프 설정
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
 
   // 보안 미들웨어
   app.use(helmet());
