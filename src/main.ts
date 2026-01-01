@@ -8,6 +8,7 @@ import cors from 'cors';
 import { AppModule } from './app.module';
 import { createLogger } from './common/logger';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -24,6 +25,9 @@ async function bootstrap() {
   // 전역 예외 필터
   const httpAdapterHost = app.get(HttpAdapterHost);
   app.useGlobalFilters(new HttpExceptionFilter(httpAdapterHost, logger));
+
+  // 전역 응답 인터셉터
+  app.useGlobalInterceptors(new ResponseInterceptor());
 
   // 전역 Validation 파이프 설정
   app.useGlobalPipes(
