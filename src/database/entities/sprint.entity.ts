@@ -15,12 +15,6 @@ export class Sprint {
   @Column({ type: 'date' })
   endDate: Date;
 
-  @Column({ type: 'date' })
-  expectedStartDate: Date;
-
-  @Column({ type: 'date' })
-  expectedEndDate: Date;
-
   @Column({ type: 'varchar', length: 100 })
   title: string;
 
