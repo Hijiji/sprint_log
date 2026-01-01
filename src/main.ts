@@ -9,7 +9,7 @@ import { createLogger } from './common/logger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
-
+  app.setGlobalPrefix('api/v1');
   // 환경 설정
   const appConfig = configService.get('app');
   const loggingConfig = configService.get('logging');
@@ -21,9 +21,10 @@ async function bootstrap() {
   // 보안 미들웨어
   app.use(helmet());
   app.enableCors({
-    origin: process.env.NODE_ENV === 'production' 
-      ? 'your-production-domain.com' 
-      : true,
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? 'your-production-domain.com'
+        : true,
     credentials: true,
   });
 
@@ -40,13 +41,10 @@ async function bootstrap() {
   }
 
   await app.listen(appConfig.port, appConfig.host, () => {
-    logger.info(
-      `${appConfig.name} 서버 시작 - ${appConfig.env} mode`,
-      {
-        port: appConfig.port,
-        host: appConfig.host,
-      },
-    );
+    logger.info(`${appConfig.name} 서버 시작 - ${appConfig.env} mode`, {
+      port: appConfig.port,
+      host: appConfig.host,
+    });
   });
 }
 
@@ -54,5 +52,3 @@ bootstrap().catch((error) => {
   console.error('애플리케이션 시작 실패:', error);
   process.exit(1);
 });
-
-
