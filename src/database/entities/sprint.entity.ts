@@ -1,5 +1,4 @@
-import { Member } from 'src/database/entities/member.entity';
-import { SprintStatusEnum } from 'src/enum/sprint-status.enum';
+import { SprintStatusEnum } from 'src/common/enum/sprint-status.enum';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { SprintManagerLink } from './sprint-manager-links.entity';
 import { Task } from './task.entity';

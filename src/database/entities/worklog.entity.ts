@@ -8,8 +8,8 @@ import {
 } from 'typeorm';
 import { Member } from './member.entity';
 import { Sprint } from './sprint.entity';
-import { TaskStatusEnum } from 'src/enum/task-status.enum';
-import { taskPriorityEnum } from 'src/enum/task-priotity.enum';
+import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
+import { taskPriorityEnum } from 'src/common/enum/task-priotity.enum';
 
 @Entity('worklogs')
 export class WorkLog {
