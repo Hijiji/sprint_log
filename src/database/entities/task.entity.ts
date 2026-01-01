@@ -36,7 +36,7 @@ export class Task {
   @Column({ type: 'date' })
   expectedEndDate: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'datetime' })
   expectedWorkTime: Date;
 
   @Column({ type: 'date' })

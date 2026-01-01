@@ -31,7 +31,7 @@ export class Sprint {
   @Column({ type: 'varchar', length: 50 })
   status: SprintStatusEnum;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'datetime' })
   createdAt: Date;
 
   @Column({ type: 'boolean' })

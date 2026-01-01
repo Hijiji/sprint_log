@@ -28,7 +28,7 @@ export class WorkLog {
   @Column({ type: 'date' })
   createdAt: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'datetime' })
   workTime: Date;
 
   @Column({ type: 'date' })
