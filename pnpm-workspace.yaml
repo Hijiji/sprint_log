@@ -1,0 +1,8 @@
+ignoredBuiltDependencies:
+  - '@nestjs/core'
+  - '@scarf/scarf'
+  - bcrypt
+  - sqlite3
+
+onlyBuiltDependencies:
+  - better-sqlite3

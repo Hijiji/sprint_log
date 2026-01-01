@@ -6,7 +6,7 @@ import { ConfigService } from '@nestjs/config';
   imports: [
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
-        type: 'sqlite',
+        type: 'better-sqlite3',
         database: configService.get<string>('database.path'),
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
         synchronize: configService.get<string>('app.env') === 'development',
