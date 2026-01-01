@@ -36,7 +36,6 @@ export class LoggingInterceptor implements NestInterceptor {
           url,
           statusCode: response?.statusCode,
           durationMs: duration,
-          // 응답 본문은 크기 및 민감도에 따라 필요시 조정
           responseBody: this.serializeForLog(data),
         });
       }),
