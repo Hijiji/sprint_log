@@ -9,6 +9,7 @@ import { AppModule } from './app.module';
 import { createLogger } from './common/logger';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -26,8 +27,11 @@ async function bootstrap() {
   const httpAdapterHost = app.get(HttpAdapterHost);
   app.useGlobalFilters(new HttpExceptionFilter(httpAdapterHost, logger));
 
-  // 전역 응답 인터셉터
-  app.useGlobalInterceptors(new ResponseInterceptor());
+  // 전역 인터셉터 (순서: 로깅 -> 응답 )
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(logger),
+    new ResponseInterceptor(),
+  );
 
   // 전역 Validation 파이프 설정
   app.useGlobalPipes(
@@ -57,7 +61,7 @@ async function bootstrap() {
       .addTag('health', '헬스 체크')
       .build();
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api-docs', app, document);
+    SwaggerModule.setup('sprint-api-docs', app, document);
   }
 
   await app.listen(appConfig.port, appConfig.host, () => {
