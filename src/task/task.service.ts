@@ -133,8 +133,97 @@ export class TaskService {
     return `This action returns a #${id} task`;
   }
 
-  update(id: number, updateTaskDto: UpdateTaskDto) {
-    return `This action updates a #${id} task`;
+  /**
+   * 업무 정보 수정
+   * @param id
+   * @param updateTaskDto
+   * @returns
+   */
+  async update(id: string, updateTaskDto: UpdateTaskDto) {
+    return runInTransaction(this.dataSource, async (manager) => {
+      const taskRepository = manager.getRepository(Task);
+      const sprintRepository = manager.getRepository(Sprint);
+      const memberRepository = manager.getRepository(Member);
+
+      const task = await taskRepository.findOne({
+        where: { taskId: id, isDeleted: false },
+      });
+      if (!task) throw new BadRequestException('존재하지 않는 업무입니다.');
+
+      // 예상 날짜 검증
+      if (updateTaskDto.expectedStartDate && updateTaskDto.expectedEndDate) {
+        const startDate = new Date(updateTaskDto.expectedStartDate);
+        const endDate = new Date(updateTaskDto.expectedEndDate);
+        if (startDate > endDate) {
+          throw new BadRequestException(
+            '종료 예정일은 시작 예정일보다 늦어야 합니다.',
+          );
+        }
+      }
+
+      // 기본 필드 업데이트 (sprintId, memberId 제외)
+      if (updateTaskDto.title !== undefined) task.title = updateTaskDto.title;
+      if (updateTaskDto.description !== undefined)
+        task.description = updateTaskDto.description;
+      if (updateTaskDto.expectedStartDate !== undefined)
+        task.expectedStartDate = updateTaskDto.expectedStartDate || null;
+      if (updateTaskDto.expectedEndDate !== undefined)
+        task.expectedEndDate = updateTaskDto.expectedEndDate || null;
+      if (updateTaskDto.expectedWorkTime !== undefined)
+        task.expectedWorkTime = updateTaskDto.expectedWorkTime;
+      if (updateTaskDto.priority !== undefined)
+        task.priority = updateTaskDto.priority;
+
+      // 상태 변경에 따른 날짜 자동 설정
+      if (updateTaskDto.status !== undefined) {
+        if (
+          updateTaskDto.status === TaskStatusEnum.ACTIVE &&
+          task.status !== TaskStatusEnum.ACTIVE
+        ) {
+          task.startDate = new Date();
+        }
+        if (
+          updateTaskDto.status === TaskStatusEnum.COMPLETED &&
+          task.status !== TaskStatusEnum.COMPLETED
+        ) {
+          task.endDate = new Date();
+        }
+        task.status = updateTaskDto.status;
+      }
+
+      // Sprint 관계 업데이트
+      if (updateTaskDto.sprintId !== undefined) {
+        if (updateTaskDto.sprintId) {
+          const sprint = await sprintRepository.findOne({
+            where: { sprintId: updateTaskDto.sprintId },
+          });
+          if (!sprint)
+            throw new BadRequestException('존재하지 않는 스프린트입니다.');
+          task.sprint = sprint;
+          task.isBackLog = false;
+        } else {
+          task.sprint = null;
+          task.isBackLog = true;
+        }
+      }
+
+      // Member 관계 업데이트
+      if (updateTaskDto.memberId !== undefined) {
+        if (updateTaskDto.memberId) {
+          const member = await memberRepository.findOne({
+            where: { memberId: updateTaskDto.memberId },
+          });
+          if (!member)
+            throw new BadRequestException('존재하지 않는 사용자입니다.');
+          task.members = member;
+        } else {
+          task.members = null;
+        }
+      }
+
+      task.updatedAt = new Date();
+      return taskRepository.save(task);
+    });
   }
 
   remove(id: number) {
