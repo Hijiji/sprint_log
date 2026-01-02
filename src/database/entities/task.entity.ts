@@ -18,41 +18,44 @@ export class Task {
   @Column({ type: 'varchar', length: 100 })
   title: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 50, default: TaskStatusEnum.PLANNED })
   status: TaskStatusEnum;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'datetime', nullable: true })
   updatedAt: Date;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   expectedStartDate: Date;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   expectedEndDate: Date;
 
-  @Column({ type: 'datetime' })
+  @Column({ type: 'datetime', nullable: true })
   expectedWorkTime: Date;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   startDate: Date;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   endDate: Date;
 
-  @Column({ type: 'boolean' })
+  @Column({ type: 'boolean', default: true })
   isBackLog: boolean;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   priority: taskPriorityEnum;
 
-  @Column({ type: 'boolean' })
+  @Column({ type: 'boolean', default: false })
   isDeleted: boolean;
+
+  @Column({ type: 'datetime', nullable: true })
+  deletedAt: Date;
 
   @ManyToOne(() => Sprint, (sprint) => sprint.tasks)
   sprint: Sprint;
