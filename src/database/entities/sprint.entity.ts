@@ -45,7 +45,4 @@ export class Sprint {
 
   @OneToMany(() => Task, (task) => task.sprint)
   tasks: Task[];
-
-  @OneToMany(() => WorkLog, (worklog) => worklog.sprint)
-  worklog: WorkLog[];
 }

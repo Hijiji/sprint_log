@@ -3,6 +3,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -10,6 +11,7 @@ import { Member } from './member.entity';
 import { Sprint } from './sprint.entity';
 import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
 import { TaskPriorityEnum } from 'src/common/enum/task-priotity.enum';
+import { WorkLog } from './worklog.entity';
 
 @Entity('tasks')
 export class Task {
@@ -64,6 +66,9 @@ export class Task {
 
   @ManyToOne(() => Sprint, (sprint) => sprint.tasks)
   sprint: Sprint;
+
+  @OneToMany(() => WorkLog, (worklog) => worklog.task)
+  worklog: WorkLog[];
 
   @OneToOne(() => Member, (member) => member.tasks)
   @JoinColumn({ name: 'memberId' })

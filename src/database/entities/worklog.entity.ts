@@ -10,6 +10,7 @@ import { Member } from './member.entity';
 import { Sprint } from './sprint.entity';
 import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
 import { TaskPriorityEnum } from 'src/common/enum/task-priotity.enum';
+import { Task } from './task.entity';
 
 @Entity('worklogs')
 export class WorkLog {
@@ -37,8 +38,11 @@ export class WorkLog {
   @Column({ type: 'boolean' })
   isDeleted: boolean;
 
-  @ManyToOne(() => Sprint, (sprint) => sprint.worklog)
-  sprint: Sprint;
+  @Column({ type: 'datetime', nullable: true })
+  deletedAt: Date;
+
+  @ManyToOne(() => Task, (task) => task.worklog)
+  task: Task;
 
   @OneToOne(() => Member, (member) => member.worklog)
   member: Member;
