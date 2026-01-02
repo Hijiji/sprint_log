@@ -52,4 +52,9 @@ export class SprintController {
   sprintStart(@Param() sprintIdDto: SprintIdDto) {
     return this.sprintService.sprintStart(sprintIdDto);
   }
+
+  @Post(':id/complete')
+  sprintComplete(@Param() sprintIdDto: SprintIdDto) {
+    return this.sprintService.sprintEnd(sprintIdDto);
+  }
 }
