@@ -13,6 +13,7 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { FindAllTaskDto } from './dto/find-all-task.dto';
+import { TaskIdDto } from './dto/task-id.dto';
 
 @ApiTags('task')
 @Controller('task')
@@ -30,17 +31,20 @@ export class TaskController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.taskService.findOne(+id);
+  findOne(@Param('id') taskIdDto: TaskIdDto) {
+    return this.taskService.findOne(taskIdDto);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
-    return this.taskService.update(id, updateTaskDto);
+  update(
+    @Param('id') taskIdDto: TaskIdDto,
+    @Body() updateTaskDto: UpdateTaskDto,
+  ) {
+    return this.taskService.update(taskIdDto, updateTaskDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.taskService.remove(+id);
+  remove(@Param('id') taskIdDto: TaskIdDto) {
+    return this.taskService.remove(taskIdDto);
   }
 }

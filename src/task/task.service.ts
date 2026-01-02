@@ -9,6 +9,7 @@ import { Member } from 'src/database/entities/member.entity';
 import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
 import { runInTransaction } from 'src/common/database/transaction.helper';
 import { TaskCursorMetaDto } from 'src/common/dto/cursor-meta.dto';
+import { TaskIdDto } from './dto/task-id.dto';
 
 @Injectable()
 export class TaskService {
@@ -129,8 +130,8 @@ export class TaskService {
     };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} task`;
+  findOne(taskIdDto: TaskIdDto) {
+    return `This action returns a #${taskIdDto.id} task`;
   }
 
   /**
@@ -139,14 +140,14 @@ export class TaskService {
    * @param updateTaskDto
    * @returns
    */
-  async update(id: string, updateTaskDto: UpdateTaskDto) {
+  async update(taskIdDto: TaskIdDto, updateTaskDto: UpdateTaskDto) {
     return runInTransaction(this.dataSource, async (manager) => {
       const taskRepository = manager.getRepository(Task);
       const sprintRepository = manager.getRepository(Sprint);
       const memberRepository = manager.getRepository(Member);
 
       const task = await taskRepository.findOne({
-        where: { taskId: id, isDeleted: false },
+        where: { taskId: taskIdDto.id, isDeleted: false },
       });
       if (!task) throw new BadRequestException('존재하지 않는 업무입니다.');
 
@@ -226,7 +227,22 @@ export class TaskService {
     });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} task`;
+  /**
+   * 업무 하나 삭제 - soft delete
+   * @param taskIdDto
+   * @returns
+   */
+  async remove(taskIdDto: TaskIdDto) {
+    runInTransaction(this.dataSource, async (manager) => {
+      const taskRepository = manager.getRepository(Task);
+      const task = await taskRepository.findOne({
+        where: { taskId: taskIdDto.id, isDeleted: false },
+      });
+      if (!task) throw new BadRequestException('존재하지 않는 업무입니다.');
+
+      task.isDeleted = true;
+      task.deletedAt = new Date();
+      return taskRepository.save(task);
+    });
   }
 }
