@@ -4,9 +4,11 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { FindAllTaskDto } from './dto/find-all-task.dto';
 import { DataSource } from 'typeorm';
 import { Task } from 'src/database/entities/task.entity';
+import { Sprint } from 'src/database/entities/sprint.entity';
+import { Member } from 'src/database/entities/member.entity';
 import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
 import { runInTransaction } from 'src/common/database/transaction.helper';
-import { TaskCursorMetaDto } from 'src/common/dto/task-cursor-meta.dto';
+import { TaskCursorMetaDto } from 'src/common/dto/cursor-meta.dto';
 
 @Injectable()
 export class TaskService {
@@ -29,26 +31,42 @@ export class TaskService {
       }
     }
 
-    const taskData = {
-      title: createTaskDto.title,
-      description: createTaskDto.description,
-      status: createTaskDto.status || TaskStatusEnum.PLANNED,
-      expectedStartDate: createTaskDto.expectedStartDate || null,
-      expectedEndDate: createTaskDto.expectedEndDate || null,
-      expectedWorkTime: createTaskDto.expectedWorkTime || 0,
-      startDate:
-        createTaskDto.status === TaskStatusEnum.ACTIVE ? new Date() : null,
-      endDate:
-        createTaskDto.status === TaskStatusEnum.COMPLETED ? new Date() : null,
-      priority: createTaskDto.priority || null,
-      isBackLog: !createTaskDto.sprintId, // sprintId가 없으면 백로그
-      sprintId: createTaskDto.sprintId || null,
-      memberId: createTaskDto.memberId || null,
-    };
-
     return runInTransaction(this.dataSource, async (manager) => {
       const taskRepository = manager.getRepository(Task);
-      return taskRepository.save(taskData);
+      const sprintRepository = manager.getRepository(Sprint);
+      const memberRepository = manager.getRepository(Member);
+
+      // sprint, member 엔티티 로드
+      const sprint = createTaskDto.sprintId
+        ? await sprintRepository.findOne({
+            where: { sprintId: createTaskDto.sprintId },
+          })
+        : null;
+
+      const member = createTaskDto.memberId
+        ? await memberRepository.findOne({
+            where: { memberId: createTaskDto.memberId },
+          })
+        : null;
+
+      const task = taskRepository.create({
+        title: createTaskDto.title,
+        description: createTaskDto.description,
+        status: createTaskDto.status || TaskStatusEnum.PLANNED,
+        expectedStartDate: createTaskDto.expectedStartDate || null,
+        expectedEndDate: createTaskDto.expectedEndDate || null,
+        expectedWorkTime: createTaskDto.expectedWorkTime || 0,
+        startDate:
+          createTaskDto.status === TaskStatusEnum.ACTIVE ? new Date() : null,
+        endDate:
+          createTaskDto.status === TaskStatusEnum.COMPLETED ? new Date() : null,
+        priority: createTaskDto.priority || null,
+        isBackLog: !createTaskDto.sprintId, // sprint이 없으면 백로그
+        sprint,
+        members: member,
+      });
+
+      return taskRepository.save(task);
     });
   }
 
@@ -58,9 +76,6 @@ export class TaskService {
    * @returns
    */
   async findAll(findAllTaskDto: FindAllTaskDto) {
-    const limit = findAllTaskDto.limit ?? 10;
-    const cursor = findAllTaskDto.cursor;
-
     const taskRepository = this.dataSource.getRepository(Task);
     const queryBuilder = taskRepository
       .createQueryBuilder('task')
@@ -68,7 +83,7 @@ export class TaskService {
       .leftJoinAndSelect('task.members', 'member')
       .where('task.isDeleted = :isDeleted', { isDeleted: false });
 
-    // 필터링 조건
+    // 필터링
     if (findAllTaskDto.status) {
       queryBuilder.andWhere('task.status = :status', {
         status: findAllTaskDto.status,
@@ -94,23 +109,23 @@ export class TaskService {
     }
 
     // Cursor 처리
-    if (cursor) {
-      queryBuilder.andWhere('task.taskId > :cursor', { cursor });
+    if (findAllTaskDto.cursor) {
+      queryBuilder.andWhere('task.taskId > :cursor', {
+        cursor: findAllTaskDto.cursor,
+      });
     }
 
     // 정렬 및 조회 (limit + 1)
     const tasks = await queryBuilder
       .orderBy('task.createdAt', 'DESC')
       .addOrderBy('task.taskId', 'DESC')
-      .take(limit + 1)
+      .take(findAllTaskDto.limit + 1)
       .getMany();
 
-    // 실제 반환 데이터 (limit개만)
-    const result = tasks.slice(0, limit);
-
+    const result = tasks.slice(0, findAllTaskDto.limit);
     return {
       tasks: result,
-      meta: TaskCursorMetaDto.create(tasks, limit),
+      meta: TaskCursorMetaDto.create(tasks, findAllTaskDto.limit),
     };
   }
 

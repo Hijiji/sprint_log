@@ -6,11 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { TaskService } from './task.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { FindAllTaskDto } from './dto/find-all-task.dto';
 
 @ApiTags('task')
 @Controller('task')
@@ -23,8 +25,8 @@ export class TaskController {
   }
 
   @Get()
-  findAll() {
-    return this.taskService.findAll();
+  findAll(@Query() findAllTaskDto: FindAllTaskDto) {
+    return this.taskService.findAll(findAllTaskDto);
   }
 
   @Get(':id')
