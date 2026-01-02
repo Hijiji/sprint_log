@@ -253,4 +253,24 @@ export class TaskService {
       return taskRepository.save(task);
     });
   }
+
+  /**
+   * 업무에 할당된 스프린트 제거
+   * @param taskIdDto
+   * @returns
+   */
+  async removeAssignSprint(taskIdDto: TaskIdDto) {
+    return runInTransaction(this.dataSource, async (manager) => {
+      const taskRepository = manager.getRepository(Task);
+      const task = await taskRepository.findOne({
+        where: { taskId: taskIdDto.id, isDeleted: false },
+      });
+      if (!task) throw new BadRequestException('존재하지 않는 업무입니다.');
+
+      task.sprint = null;
+      task.isBackLog = true;
+      task.updatedAt = new Date();
+      return taskRepository.save(task);
+    });
+  }
 }

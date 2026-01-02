@@ -52,4 +52,9 @@ export class TaskController {
   removeAll(@Param('id') taskIdDto: TaskIdDto) {
     return this.taskService.remove(taskIdDto, true);
   }
+
+  @Delete(':id/assign-sprint')
+  removeAssignSprint(@Param('id') taskIdDto: TaskIdDto) {
+    return this.taskService.removeAssignSprint(taskIdDto);
+  }
 }
