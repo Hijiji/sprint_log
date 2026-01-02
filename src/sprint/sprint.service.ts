@@ -8,6 +8,7 @@ import { SprintStatusEnum } from 'src/common/enum/sprint-status.enum';
 import { runInTransaction } from 'src/common/database/transaction.helper';
 import { Sprint } from 'src/database/entities/sprint.entity';
 import { PaginationMetaDto } from 'src/common/dto/pagination-meta.dto';
+import { SprintIdDto } from './dto/sprint-id-dto';
 
 @Injectable()
 export class SprintService {
@@ -83,8 +84,24 @@ export class SprintService {
     });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} sprint`;
+  /**
+   * 스프린트 단건 조회
+   * @param sprintIdDto - 스프린트 ID
+   * @returns
+   */
+  async findOne(sprintIdDto: SprintIdDto) {
+    return runInTransaction(this.dataSource, async (manager) => {
+      const sprintRepository = manager.getRepository(Sprint);
+      const sprint = await sprintRepository.findOne({
+        where: { sprintId: sprintIdDto.id, isDeleted: false },
+      });
+
+      if (!sprint) {
+        throw new BadRequestException('존재하지 않는 스프린트입니다.');
+      }
+
+      return sprint;
+    });
   }
 
   update(id: number, updateSprintDto: UpdateSprintDto) {

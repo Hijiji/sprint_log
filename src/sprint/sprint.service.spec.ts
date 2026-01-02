@@ -1,13 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SprintService } from './sprint.service';
+import { ConfigService } from '@nestjs/config';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Sprint } from 'src/database/entities/sprint.entity';
 import { SprintStatusEnum } from 'src/common/enum/sprint-status.enum';
+import { PaginationMetaDto } from 'src/common/dto/pagination-meta.dto';
 import { BadRequestException } from '@nestjs/common';
 
 describe('SprintService', () => {
   let service: SprintService;
   let dataSource: DataSource;
+  let configService: ConfigService;
   let mockQueryRunner: any;
   let mockManager: EntityManager;
   let mockSprintRepository: Repository<Sprint>;
@@ -18,6 +21,7 @@ describe('SprintService', () => {
       save: jest.fn(),
       findOne: jest.fn(),
       find: jest.fn(),
+      findAndCount: jest.fn(),
     } as any;
 
     // Mock EntityManager
@@ -40,6 +44,11 @@ describe('SprintService', () => {
       createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
     };
 
+    // Mock ConfigService
+    const mockConfigService = {
+      get: jest.fn().mockReturnValue(10),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SprintService,
@@ -47,11 +56,16 @@ describe('SprintService', () => {
           provide: DataSource,
           useValue: mockDataSource,
         },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
       ],
     }).compile();
 
     service = module.get<SprintService>(SprintService);
     dataSource = module.get<DataSource>(DataSource);
+    configService = module.get<ConfigService>(ConfigService);
   });
 
   afterEach(() => {
@@ -147,6 +161,98 @@ describe('SprintService', () => {
           isDeleted: false,
         }),
       );
+    });
+  });
+
+  describe('findAll', () => {
+    const mockSprints = [
+      {
+        sprintId: 'uuid-1',
+        title: 'Sprint 1',
+        description: 'Description 1',
+        startDate: '2026-01-01',
+        endDate: '2026-01-15',
+        status: SprintStatusEnum.ACTIVE,
+        createdAt: new Date('2026-01-01'),
+        isDeleted: false,
+      },
+      {
+        sprintId: 'uuid-2',
+        title: 'Sprint 2',
+        description: 'Description 2',
+        startDate: '2026-01-16',
+        endDate: '2026-01-31',
+        status: SprintStatusEnum.PLANNED,
+        createdAt: new Date('2026-01-02'),
+        isDeleted: false,
+      },
+    ];
+
+    it('스프린트 목록 조회 - 페이지네이션', async () => {
+      const findAllSprintDto = { offset: 0, limit: 10 };
+      (mockSprintRepository.findAndCount as jest.Mock).mockResolvedValue([
+        mockSprints,
+        2,
+      ]);
+
+      const result = await service.findAll(findAllSprintDto);
+
+      expect(mockQueryRunner.connect).toHaveBeenCalled();
+      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
+      expect(mockManager.getRepository).toHaveBeenCalledWith(Sprint);
+      expect(mockSprintRepository.findAndCount).toHaveBeenCalledWith({
+        where: { isDeleted: false },
+        order: { createdAt: 'DESC' },
+        skip: 0,
+        take: 10,
+      });
+      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.release).toHaveBeenCalled();
+
+      expect(result.sprints).toEqual(mockSprints);
+      expect(result.meta).toEqual(PaginationMetaDto.create(2, 0, 10));
+    });
+
+    it('offset과 limit이 없으면 기본값 적용', async () => {
+      const findAllSprintDto = {};
+      (mockSprintRepository.findAndCount as jest.Mock).mockResolvedValue([
+        mockSprints,
+        2,
+      ]);
+
+      const result = await service.findAll(findAllSprintDto);
+
+      expect(mockSprintRepository.findAndCount).toHaveBeenCalledWith({
+        where: { isDeleted: false },
+        order: { createdAt: 'DESC' },
+        skip: 0,
+        take: 10,
+      });
+
+      expect(result.meta.offset).toBe(0);
+      expect(result.meta.limit).toBe(10);
+      expect(result.meta.currentPage).toBe(1);
+      expect(result.meta.totalPages).toBe(1);
+    });
+
+    it('커스텀 offset과 limit으로 조회', async () => {
+      const findAllSprintDto = { offset: 20, limit: 5 };
+      (mockSprintRepository.findAndCount as jest.Mock).mockResolvedValue([
+        [],
+        25,
+      ]);
+
+      const result = await service.findAll(findAllSprintDto);
+
+      expect(mockSprintRepository.findAndCount).toHaveBeenCalledWith({
+        where: { isDeleted: false },
+        order: { createdAt: 'DESC' },
+        skip: 20,
+        take: 5,
+      });
+
+      expect(result.sprints).toEqual([]);
+      expect(result.meta).toEqual(PaginationMetaDto.create(25, 20, 5));
     });
   });
 });

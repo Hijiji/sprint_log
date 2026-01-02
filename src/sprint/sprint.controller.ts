@@ -13,6 +13,7 @@ import { SprintService } from './sprint.service';
 import { CreateSprintDto } from './dto/create-sprint.dto';
 import { UpdateSprintDto } from './dto/update-sprint.dto';
 import { FindAllSprintDto } from './dto/find-all-sprint.dto';
+import { SprintIdDto } from './dto/sprint-id-dto';
 
 @ApiTags('sprints')
 @Controller('sprints')
@@ -30,8 +31,8 @@ export class SprintController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.sprintService.findOne(+id);
+  findOne(@Param() sprintIdDto: SprintIdDto) {
+    return this.sprintService.findOne(sprintIdDto);
   }
 
   @Patch(':id')
