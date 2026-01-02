@@ -164,21 +164,16 @@ export class SprintService {
    * @param sprintIdDto
    * @returns
    */
-  remove(sprintIdDto: SprintIdDto) {
+  async remove(sprintIdDto: SprintIdDto) {
     return runInTransaction(this.dataSource, async (manager) => {
       const sprintRepository = manager.getRepository(Sprint);
 
       const sprint = await sprintRepository.findOne({
         where: { sprintId: sprintIdDto.id, isDeleted: false },
       });
+
       if (!sprint) {
-        throw new BadRequestException('존재하지 않는 스프린트입니다');
-      }
-      const delSprint = await sprintRepository.findOne({
-        where: { sprintId: sprintIdDto.id, isDeleted: true },
-      });
-      if (delSprint) {
-        throw new BadRequestException('이미 삭제된 스프린트입니다');
+        throw new BadRequestException('존재하지 않는 스프린트입니다.');
       }
 
       sprint.isDeleted = true;
