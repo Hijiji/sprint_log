@@ -204,6 +204,7 @@ export class SprintService {
 
   /**
    * 스프린트 종료 - status : 완료, endDate: 현재일
+   * todo : 미완료 업무 백로그로 이동
    * @param sprintIdDto
    * @returns
    */
