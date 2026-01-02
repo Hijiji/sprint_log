@@ -61,54 +61,50 @@ export class SprintService {
     const offset = findAllSprintDto.offset ?? 0;
     const limit = findAllSprintDto.limit ?? defaultLimit;
 
-    return runInTransaction(this.dataSource, async (manager) => {
-      const sprintRepository = manager.getRepository(Sprint);
+    const sprintRepository = this.dataSource.getRepository(Sprint);
 
-      const [sprints, total] = await sprintRepository.findAndCount({
-        select: {
-          sprintId: true,
-          title: true,
-          startDate: true,
-          endDate: true,
-          status: true,
-        },
-        where: { isDeleted: false },
-        order: { createdAt: 'DESC' },
-        skip: offset,
-        take: limit,
-      });
-
-      return {
-        sprints,
-        meta: PaginationMetaDto.create(total, offset, limit),
-      };
+    const [sprints, total] = await sprintRepository.findAndCount({
+      select: {
+        sprintId: true,
+        title: true,
+        startDate: true,
+        endDate: true,
+        status: true,
+      },
+      where: { isDeleted: false },
+      order: { createdAt: 'DESC' },
+      skip: offset,
+      take: limit,
     });
+
+    return {
+      sprints,
+      meta: PaginationMetaDto.create(total, offset, limit),
+    };
   }
 
   /**
    * 스프린트 단건 조회
-   * @param sprintIdDto - 스프린트 ID
+   * @param sprintIdDto
    * @returns
    */
   async findOne(sprintIdDto: SprintIdDto) {
-    return runInTransaction(this.dataSource, async (manager) => {
-      const sprintRepository = manager.getRepository(Sprint);
-      const sprint = await sprintRepository.findOne({
-        where: { sprintId: sprintIdDto.id, isDeleted: false },
-      });
-
-      if (!sprint) {
-        throw new BadRequestException('존재하지 않는 스프린트입니다.');
-      }
-
-      return sprint;
+    const sprintRepository = this.dataSource.getRepository(Sprint);
+    const sprint = await sprintRepository.findOne({
+      where: { sprintId: sprintIdDto.id, isDeleted: false },
     });
+
+    if (!sprint) {
+      throw new BadRequestException('존재하지 않는 스프린트입니다.');
+    }
+
+    return sprint;
   }
 
   /**
    * 스프린트 정보 수정
-   * @param sprintIdDto - 스프린트 ID
-   * @param updateSprintDto - 수정할 내용
+   * @param sprintIdDto
+   * @param updateSprintDto
    * @returns
    */
   async update(sprintIdDto: SprintIdDto, updateSprintDto: UpdateSprintDto) {

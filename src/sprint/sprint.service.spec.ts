@@ -42,6 +42,7 @@ describe('SprintService', () => {
     // Mock DataSource
     const mockDataSource = {
       createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+      getRepository: jest.fn().mockReturnValue(mockSprintRepository),
     };
 
     // Mock ConfigService
@@ -197,17 +198,20 @@ describe('SprintService', () => {
 
       const result = await service.findAll(findAllSprintDto);
 
-      expect(mockQueryRunner.connect).toHaveBeenCalled();
-      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
-      expect(mockManager.getRepository).toHaveBeenCalledWith(Sprint);
+      expect(dataSource.getRepository).toHaveBeenCalledWith(Sprint);
       expect(mockSprintRepository.findAndCount).toHaveBeenCalledWith({
+        select: {
+          sprintId: true,
+          title: true,
+          startDate: true,
+          endDate: true,
+          status: true,
+        },
         where: { isDeleted: false },
         order: { createdAt: 'DESC' },
         skip: 0,
         take: 10,
       });
-      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
-      expect(mockQueryRunner.release).toHaveBeenCalled();
 
       expect(result.sprints).toEqual(mockSprints);
       expect(result.meta).toEqual(PaginationMetaDto.create(2, 0, 10));
@@ -223,6 +227,13 @@ describe('SprintService', () => {
       const result = await service.findAll(findAllSprintDto);
 
       expect(mockSprintRepository.findAndCount).toHaveBeenCalledWith({
+        select: {
+          sprintId: true,
+          title: true,
+          startDate: true,
+          endDate: true,
+          status: true,
+        },
         where: { isDeleted: false },
         order: { createdAt: 'DESC' },
         skip: 0,
@@ -245,6 +256,13 @@ describe('SprintService', () => {
       const result = await service.findAll(findAllSprintDto);
 
       expect(mockSprintRepository.findAndCount).toHaveBeenCalledWith({
+        select: {
+          sprintId: true,
+          title: true,
+          startDate: true,
+          endDate: true,
+          status: true,
+        },
         where: { isDeleted: false },
         order: { createdAt: 'DESC' },
         skip: 20,
@@ -253,6 +271,45 @@ describe('SprintService', () => {
 
       expect(result.sprints).toEqual([]);
       expect(result.meta).toEqual(PaginationMetaDto.create(25, 20, 5));
+    });
+  });
+
+  describe('findOne', () => {
+    const mockSprint = {
+      sprintId: 'uuid-1',
+      title: 'Sprint 1',
+      description: 'Description 1',
+      startDate: '2026-01-01',
+      endDate: '2026-01-15',
+      status: SprintStatusEnum.ACTIVE,
+      createdAt: new Date('2026-01-01'),
+      isDeleted: false,
+      deletedAt: null,
+    };
+
+    it('스프린트 단건 조회 성공', async () => {
+      const sprintIdDto = { id: 'uuid-1' };
+      (mockSprintRepository.findOne as jest.Mock).mockResolvedValue(mockSprint);
+
+      const result = await service.findOne(sprintIdDto);
+
+      expect(dataSource.getRepository).toHaveBeenCalledWith(Sprint);
+      expect(mockSprintRepository.findOne).toHaveBeenCalledWith({
+        where: { sprintId: 'uuid-1', isDeleted: false },
+      });
+      expect(result).toEqual(mockSprint);
+    });
+
+    it('존재하지 않는 스프린트면 에러', async () => {
+      const sprintIdDto = { id: 'invalid-id' };
+      (mockSprintRepository.findOne as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.findOne(sprintIdDto)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.findOne(sprintIdDto)).rejects.toThrow(
+        '존재하지 않는 스프린트입니다.',
+      );
     });
   });
 });
