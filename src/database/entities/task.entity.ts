@@ -8,7 +8,7 @@ import {
 import { Member } from './member.entity';
 import { Sprint } from './sprint.entity';
 import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
-import { taskPriorityEnum } from 'src/common/enum/task-priotity.enum';
+import { TaskPriorityEnum } from 'src/common/enum/task-priotity.enum';
 
 @Entity('tasks')
 export class Task {
@@ -24,7 +24,11 @@ export class Task {
   @Column({ type: 'varchar', length: 50, default: TaskStatusEnum.PLANNED })
   status: TaskStatusEnum;
 
-  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({
+    type: 'datetime',
+    default: () => 'CURRENT_TIMESTAMP',
+    update: false,
+  })
   createdAt: Date;
 
   @Column({ type: 'datetime', nullable: true })
@@ -36,7 +40,7 @@ export class Task {
   @Column({ type: 'date', nullable: true })
   expectedEndDate: Date;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ type: 'int', default: 0 })
   expectedWorkTime: number;
 
   @Column({ type: 'date', nullable: true })
@@ -49,7 +53,7 @@ export class Task {
   isBackLog: boolean;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  priority: taskPriorityEnum;
+  priority: TaskPriorityEnum;
 
   @Column({ type: 'boolean', default: false })
   isDeleted: boolean;

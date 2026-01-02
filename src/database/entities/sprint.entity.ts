@@ -24,7 +24,11 @@ export class Sprint {
   @Column({ type: 'varchar', length: 50, default: SprintStatusEnum.PLANNED })
   status: SprintStatusEnum;
 
-  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({
+    type: 'datetime',
+    default: () => 'CURRENT_TIMESTAMP',
+    update: false,
+  })
   createdAt: Date;
 
   @Column({ type: 'boolean', default: false })
