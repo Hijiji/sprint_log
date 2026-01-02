@@ -2,7 +2,7 @@ import {
   Column,
   Entity,
   ManyToOne,
-  OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Member } from './member.entity';
@@ -36,8 +36,8 @@ export class Task {
   @Column({ type: 'date', nullable: true })
   expectedEndDate: Date;
 
-  @Column({ type: 'datetime', nullable: true })
-  expectedWorkTime: Date;
+  @Column({ type: 'int', nullable: true })
+  expectedWorkTime: number;
 
   @Column({ type: 'date', nullable: true })
   startDate: Date;
@@ -60,6 +60,6 @@ export class Task {
   @ManyToOne(() => Sprint, (sprint) => sprint.tasks)
   sprint: Sprint;
 
-  @OneToMany(() => Member, (member) => member.tasks)
-  members: Member[];
+  @OneToOne(() => Member, (member) => member.tasks)
+  members: Member;
 }

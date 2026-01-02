@@ -6,9 +6,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
-  OneToMany,
-  ManyToOne,
   OneToOne,
+  OneToMany,
 } from 'typeorm';
 import { SprintManagerLink } from './sprint-manager-links.entity';
 import { Task } from './task.entity';
@@ -47,7 +46,7 @@ export class Member {
   )
   sprintManagerLinks: SprintManagerLink[];
 
-  @ManyToOne(() => Task, (task) => task.members)
+  @OneToOne(() => Task, (task) => task.members)
   tasks: Task;
 
   @OneToOne(() => WorkLog, (worklog) => worklog.member)
