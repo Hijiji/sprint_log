@@ -1,15 +1,26 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { CreateSprintDto } from './dto/create-sprint.dto';
 import { UpdateSprintDto } from './dto/update-sprint.dto';
+import { FindAllSprintDto } from './dto/find-all-sprint.dto';
 import { SprintStatusEnum } from 'src/common/enum/sprint-status.enum';
 import { runInTransaction } from 'src/common/database/transaction.helper';
 import { Sprint } from 'src/database/entities/sprint.entity';
+import { PaginationMetaDto } from 'src/common/dto/pagination-meta.dto';
 
 @Injectable()
 export class SprintService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly configService: ConfigService,
+  ) {}
 
+  /**
+   * 스프린트 하나 생성
+   * @param createSprintDto
+   * @returns
+   */
   async create(createSprintDto: CreateSprintDto) {
     const sprintData = {
       title: createSprintDto.title,
@@ -36,8 +47,40 @@ export class SprintService {
     });
   }
 
-  findAll() {
-    return `This action returns all sprint`;
+  /**
+   * 스프린트 목록 조회 (페이지네이션)
+   * @param findAllSprintDto
+   * @returns
+   */
+  async findAll(findAllSprintDto: FindAllSprintDto) {
+    const defaultLimit = this.configService.get<number>(
+      'pagination.defaultLimit',
+    );
+    const offset = findAllSprintDto.offset ?? 0;
+    const limit = findAllSprintDto.limit ?? defaultLimit;
+
+    return runInTransaction(this.dataSource, async (manager) => {
+      const sprintRepository = manager.getRepository(Sprint);
+
+      const [sprints, total] = await sprintRepository.findAndCount({
+        select: {
+          sprintId: true,
+          title: true,
+          startDate: true,
+          endDate: true,
+          status: true,
+        },
+        where: { isDeleted: false },
+        order: { createdAt: 'DESC' },
+        skip: offset,
+        take: limit,
+      });
+
+      return {
+        sprints,
+        meta: PaginationMetaDto.create(total, offset, limit),
+      };
+    });
   }
 
   findOne(id: number) {
