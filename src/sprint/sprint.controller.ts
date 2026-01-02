@@ -6,11 +6,15 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { SprintService } from './sprint.service';
 import { CreateSprintDto } from './dto/create-sprint.dto';
 import { UpdateSprintDto } from './dto/update-sprint.dto';
+import { FindAllSprintDto } from './dto/find-all-sprint.dto';
 
+@ApiTags('sprints')
 @Controller('sprints')
 export class SprintController {
   constructor(private readonly sprintService: SprintService) {}
@@ -21,8 +25,8 @@ export class SprintController {
   }
 
   @Get()
-  findAll() {
-    return this.sprintService.findAll();
+  findAll(@Query() findAllSprintDto: FindAllSprintDto) {
+    return this.sprintService.findAll(findAllSprintDto);
   }
 
   @Get(':id')

@@ -16,4 +16,7 @@ export default () => ({
     secret: process.env.JWT_SECRET,
     expiration: process.env.JWT_EXPIRATION || '7d',
   },
+  pagination: {
+    defaultLimit: parseInt(process.env.PAGINATION_DEFAULT_LIMIT || '10', 10),
+  },
 });
