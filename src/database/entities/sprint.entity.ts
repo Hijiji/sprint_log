@@ -30,6 +30,9 @@ export class Sprint {
   @Column({ type: 'boolean' })
   isDeleted: boolean;
 
+  @Column({ type: 'datetime', nullable: true })
+  deletedAt: Date | null;
+
   @OneToMany(
     () => SprintManagerLink,
     (sprintManagerLinks) => sprintManagerLinks.sprint,
