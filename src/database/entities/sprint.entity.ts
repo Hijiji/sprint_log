@@ -9,10 +9,10 @@ export class Sprint {
   @PrimaryGeneratedColumn('uuid')
   sprintId: string;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   startDate: Date;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   endDate: Date;
 
   @Column({ type: 'varchar', length: 100 })
@@ -21,13 +21,13 @@ export class Sprint {
   @Column({ type: 'text' })
   description: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 50, default: SprintStatusEnum.PLANNED })
   status: SprintStatusEnum;
 
-  @Column({ type: 'datetime' })
+  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @Column({ type: 'boolean' })
+  @Column({ type: 'boolean', default: false })
   isDeleted: boolean;
 
   @Column({ type: 'datetime', nullable: true })
