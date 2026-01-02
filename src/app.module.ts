@@ -6,6 +6,7 @@ import { DatabaseModule } from './database/database.module';
 import configuration from './config/configuration';
 import { validationSchema } from './config/validation';
 import { SprintModule } from './sprint/sprint.module';
+import { TaskModule } from './task/task.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SprintModule } from './sprint/sprint.module';
     }),
     DatabaseModule,
     SprintModule,
+    TaskModule,
   ],
   controllers: [AppController],
   providers: [AppService],
