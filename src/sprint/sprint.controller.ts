@@ -47,4 +47,9 @@ export class SprintController {
   remove(@Param() sprintIdDto: SprintIdDto) {
     return this.sprintService.remove(sprintIdDto);
   }
+
+  @Post(':id/start')
+  sprintStart(@Param() sprintIdDto: SprintIdDto) {
+    return this.sprintService.sprintStart(sprintIdDto);
+  }
 }

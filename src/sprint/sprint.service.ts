@@ -177,4 +177,28 @@ export class SprintService {
       return sprintRepository.save(sprint);
     });
   }
+
+  /**
+   * 스프린트 시작 - status : 진행중, startDate: 현재일, endDate: null
+   * @param sprintIdDto
+   * @returns
+   */
+  async sprintStart(sprintIdDto: SprintIdDto) {
+    return runInTransaction(this.dataSource, async (manager) => {
+      const sprintRepository = manager.getRepository(Sprint);
+
+      const sprint = await sprintRepository.findOne({
+        where: { sprintId: sprintIdDto.id, isDeleted: false },
+      });
+
+      if (!sprint) {
+        throw new BadRequestException('존재하지 않는 스프린트입니다.');
+      }
+
+      sprint.status = SprintStatusEnum.ACTIVE;
+      sprint.startDate = new Date();
+      sprint.endDate = null;
+      return sprintRepository.save(sprint);
+    });
+  }
 }
