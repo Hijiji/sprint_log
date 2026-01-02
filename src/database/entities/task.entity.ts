@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -65,5 +66,6 @@ export class Task {
   sprint: Sprint;
 
   @OneToOne(() => Member, (member) => member.tasks)
+  @JoinColumn({ name: 'memberId' })
   members: Member;
 }
