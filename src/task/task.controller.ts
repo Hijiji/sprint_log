@@ -14,6 +14,7 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { FindAllTaskDto } from './dto/find-all-task.dto';
 import { TaskIdDto } from './dto/task-id.dto';
+import { AssignSprintDto } from './dto/assign-sprint.dto';
 
 @ApiTags('task')
 @Controller('task')
@@ -51,6 +52,17 @@ export class TaskController {
   @Delete(':id/work-logs')
   removeAll(@Param('id') taskIdDto: TaskIdDto) {
     return this.taskService.remove(taskIdDto, true);
+  }
+
+  @Post(':id/assign-sprint')
+  assignSprint(
+    @Param('id') taskIdDto: TaskIdDto,
+    @Body() assignSprintDto: AssignSprintDto,
+  ) {
+    return this.taskService.assignSprint(
+      taskIdDto.id,
+      assignSprintDto.sprintId,
+    );
   }
 
   @Delete(':id/assign-sprint')

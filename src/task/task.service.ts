@@ -255,6 +255,35 @@ export class TaskService {
   }
 
   /**
+   * 업무에 스프린트 할당
+   * @param taskId
+   * @param sprintId
+   * @returns
+   */
+  async assignSprint(taskId: string, sprintId: string) {
+    return runInTransaction(this.dataSource, async (manager) => {
+      const taskRepository = manager.getRepository(Task);
+      const sprintRepository = manager.getRepository(Sprint);
+
+      const task = await taskRepository.findOne({
+        where: { taskId: taskId, isDeleted: false },
+      });
+      if (!task) throw new BadRequestException('존재하지 않는 업무입니다.');
+
+      const sprint = await sprintRepository.findOne({
+        where: { sprintId: sprintId, isDeleted: false },
+      });
+      if (!sprint)
+        throw new BadRequestException('존재하지 않는 스프린트입니다.');
+
+      task.sprint = sprint;
+      task.isBackLog = false;
+      task.updatedAt = new Date();
+      return taskRepository.save(task);
+    });
+  }
+
+  /**
    * 업무에 할당된 스프린트 제거
    * @param taskIdDto
    * @returns
