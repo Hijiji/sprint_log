@@ -31,17 +31,20 @@ export class SprintController {
   }
 
   @Get(':id')
-  findOne(@Param() sprintIdDto: SprintIdDto) {
+  findOne(@Param('id') sprintIdDto: SprintIdDto) {
     return this.sprintService.findOne(sprintIdDto);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSprintDto: UpdateSprintDto) {
-    return this.sprintService.update(+id, updateSprintDto);
+  update(
+    @Param() sprintIdDto: SprintIdDto,
+    @Body() updateSprintDto: UpdateSprintDto,
+  ) {
+    return this.sprintService.update(sprintIdDto, updateSprintDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.sprintService.remove(+id);
+  remove(@Param() sprintIdDto: SprintIdDto) {
+    return this.sprintService.remove(sprintIdDto);
   }
 }

@@ -32,6 +32,7 @@ export class SprintService {
 
       createdAt: new Date(),
       isDeleted: false,
+      deletedAt: null,
     };
 
     if (sprintData.startDate && sprintData.endDate) {
@@ -104,11 +105,85 @@ export class SprintService {
     });
   }
 
-  update(id: number, updateSprintDto: UpdateSprintDto) {
-    return `This action updates a #${id} sprint`;
+  /**
+   * 스프린트 정보 수정
+   * @param sprintIdDto - 스프린트 ID
+   * @param updateSprintDto - 수정할 내용
+   * @returns
+   */
+  async update(sprintIdDto: SprintIdDto, updateSprintDto: UpdateSprintDto) {
+    return runInTransaction(this.dataSource, async (manager) => {
+      const sprintRepository = manager.getRepository(Sprint);
+
+      const sprint = await sprintRepository.findOne({
+        where: { sprintId: sprintIdDto.id, isDeleted: false },
+      });
+
+      if (!sprint) {
+        throw new BadRequestException('존재하지 않는 스프린트입니다.');
+      }
+
+      if (updateSprintDto.startDate && updateSprintDto.endDate) {
+        const startDate = new Date(updateSprintDto.startDate);
+        const endDate = new Date(updateSprintDto.endDate);
+        if (startDate > endDate) {
+          throw new BadRequestException('종료일은 시작일보다 늦어야 합니다.');
+        }
+      }
+
+      const startDate = updateSprintDto.startDate
+        ? new Date(updateSprintDto.startDate)
+        : undefined;
+
+      const endDate = updateSprintDto.endDate
+        ? new Date(updateSprintDto.endDate)
+        : undefined;
+
+      if (updateSprintDto.title !== undefined) {
+        sprint.title = updateSprintDto.title;
+      }
+      if (updateSprintDto.description !== undefined) {
+        sprint.description = updateSprintDto.description;
+      }
+      if (startDate !== undefined) {
+        sprint.startDate = startDate || null;
+      }
+      if (updateSprintDto.endDate !== undefined) {
+        sprint.endDate = endDate || null;
+      }
+      if (updateSprintDto.status !== undefined) {
+        sprint.status = updateSprintDto.status;
+      }
+
+      return sprintRepository.save(sprint);
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} sprint`;
+  /**
+   * 스프린트 삭제 - soft delete
+   * @param sprintIdDto
+   * @returns
+   */
+  remove(sprintIdDto: SprintIdDto) {
+    return runInTransaction(this.dataSource, async (manager) => {
+      const sprintRepository = manager.getRepository(Sprint);
+
+      const sprint = await sprintRepository.findOne({
+        where: { sprintId: sprintIdDto.id, isDeleted: false },
+      });
+      if (!sprint) {
+        throw new BadRequestException('존재하지 않는 스프린트입니다');
+      }
+      const delSprint = await sprintRepository.findOne({
+        where: { sprintId: sprintIdDto.id, isDeleted: true },
+      });
+      if (delSprint) {
+        throw new BadRequestException('이미 삭제된 스프린트입니다');
+      }
+
+      sprint.isDeleted = true;
+      sprint.deletedAt = new Date();
+      return sprintRepository.save(sprint);
+    });
   }
 }
