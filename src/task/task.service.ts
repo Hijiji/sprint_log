@@ -10,6 +10,7 @@ import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
 import { runInTransaction } from 'src/common/database/transaction.helper';
 import { TaskCursorMetaDto } from 'src/common/dto/cursor-meta.dto';
 import { TaskIdDto } from './dto/task-id.dto';
+import { WorkLog } from 'src/database/entities/worklog.entity';
 
 @Injectable()
 export class TaskService {
@@ -232,7 +233,7 @@ export class TaskService {
    * @param taskIdDto
    * @returns
    */
-  async remove(taskIdDto: TaskIdDto) {
+  async remove(taskIdDto: TaskIdDto, removeWithWorkLogs: boolean) {
     runInTransaction(this.dataSource, async (manager) => {
       const taskRepository = manager.getRepository(Task);
       const task = await taskRepository.findOne({
@@ -240,6 +241,13 @@ export class TaskService {
       });
       if (!task) throw new BadRequestException('존재하지 않는 업무입니다.');
 
+      if (removeWithWorkLogs) {
+        const workLogRepository = manager.getRepository(WorkLog);
+        await workLogRepository.update(
+          { task: { taskId: taskIdDto.id }, isDeleted: false },
+          { isDeleted: true, deletedAt: new Date() },
+        );
+      }
       task.isDeleted = true;
       task.deletedAt = new Date();
       return taskRepository.save(task);

@@ -45,6 +45,11 @@ export class TaskController {
 
   @Delete(':id')
   remove(@Param('id') taskIdDto: TaskIdDto) {
-    return this.taskService.remove(taskIdDto);
+    return this.taskService.remove(taskIdDto, false);
+  }
+
+  @Delete(':id/work-logs')
+  removeAll(@Param('id') taskIdDto: TaskIdDto) {
+    return this.taskService.remove(taskIdDto, true);
   }
 }
