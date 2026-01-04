@@ -368,18 +368,179 @@ describe('WorkLogService', () => {
   });
 
   describe('update', () => {
-    it('WorkLog 업데이트', async () => {
+    it('WorkLog 제목만 업데이트', async () => {
       // Arrange
+      const workLogIdDto = { id: 'worklog-1' };
       const updateWorkLogDto: UpdateWorkLogDto = {
         title: 'Updated Title',
+      } as UpdateWorkLogDto;
+
+      const updatedWorkLog = {
+        ...mockWorkLog,
+        title: 'Updated Title',
+      };
+
+      mockQueryRunner.manager.getRepository = jest.fn((entity: any) => {
+        if (entity === WorkLog) return mockWorkLogRepository;
+        return mockWorkLogRepository;
+      });
+
+      mockWorkLogRepository.findOne.mockResolvedValue(mockWorkLog);
+      mockWorkLogRepository.save.mockResolvedValue(updatedWorkLog);
+
+      // Act
+      const result = await service.update(workLogIdDto, updateWorkLogDto);
+
+      // Assert
+      expect(result.title).toBe('Updated Title');
+      expect(mockWorkLogRepository.findOne).toHaveBeenCalledWith({
+        where: { workLogId: 'worklog-1' },
+      });
+      expect(mockWorkLogRepository.save).toHaveBeenCalled();
+    });
+
+    it('WorkLog 내용 업데이트', async () => {
+      // Arrange
+      const workLogIdDto = { id: 'worklog-1' };
+      const updateWorkLogDto: UpdateWorkLogDto = {
+        contents: 'Updated contents',
+      } as UpdateWorkLogDto;
+
+      const updatedWorkLog = {
+        ...mockWorkLog,
+        contents: 'Updated contents',
+      };
+
+      mockQueryRunner.manager.getRepository = jest.fn((entity: any) => {
+        if (entity === WorkLog) return mockWorkLogRepository;
+        return mockWorkLogRepository;
+      });
+
+      mockWorkLogRepository.findOne.mockResolvedValue(mockWorkLog);
+      mockWorkLogRepository.save.mockResolvedValue(updatedWorkLog);
+
+      // Act
+      const result = await service.update(workLogIdDto, updateWorkLogDto);
+
+      // Assert
+      expect(result.contents).toBe('Updated contents');
+      expect(mockWorkLogRepository.save).toHaveBeenCalled();
+    });
+
+    it('WorkLog 작업시간 업데이트', async () => {
+      // Arrange
+      const workLogIdDto = { id: 'worklog-1' };
+      const updateWorkLogDto: UpdateWorkLogDto = {
+        workTime: 8,
+      } as UpdateWorkLogDto;
+
+      const updatedWorkLog = {
+        ...mockWorkLog,
         workTime: 8,
       };
 
+      mockQueryRunner.manager.getRepository = jest.fn((entity: any) => {
+        if (entity === WorkLog) return mockWorkLogRepository;
+        return mockWorkLogRepository;
+      });
+
+      mockWorkLogRepository.findOne.mockResolvedValue(mockWorkLog);
+      mockWorkLogRepository.save.mockResolvedValue(updatedWorkLog);
+
       // Act
-      const result = await service.update(1, updateWorkLogDto);
+      const result = await service.update(workLogIdDto, updateWorkLogDto);
 
       // Assert
-      expect(result).toContain('This action updates a #1 workLog');
+      expect(result.workTime).toBe(8);
+      expect(mockWorkLogRepository.save).toHaveBeenCalled();
+    });
+
+    it('WorkLog 작업일 업데이트', async () => {
+      // Arrange
+      const workLogIdDto = { id: 'worklog-1' };
+      const newDate = new Date('2026-01-05');
+      const updateWorkLogDto: UpdateWorkLogDto = {
+        workDate: newDate,
+      } as UpdateWorkLogDto;
+
+      const updatedWorkLog = {
+        ...mockWorkLog,
+        workDate: newDate,
+      };
+
+      mockQueryRunner.manager.getRepository = jest.fn((entity: any) => {
+        if (entity === WorkLog) return mockWorkLogRepository;
+        return mockWorkLogRepository;
+      });
+
+      mockWorkLogRepository.findOne.mockResolvedValue(mockWorkLog);
+      mockWorkLogRepository.save.mockResolvedValue(updatedWorkLog);
+
+      // Act
+      const result = await service.update(workLogIdDto, updateWorkLogDto);
+
+      // Assert
+      expect(result.workDate).toEqual(newDate);
+      expect(mockWorkLogRepository.save).toHaveBeenCalled();
+    });
+
+    it('존재하지 않는 WorkLog 업데이트 시 에러 발생', async () => {
+      // Arrange
+      const workLogIdDto = { id: 'non-existent-worklog' };
+      const updateWorkLogDto: UpdateWorkLogDto = {
+        title: 'Updated Title',
+      } as UpdateWorkLogDto;
+
+      mockQueryRunner.manager.getRepository = jest.fn((entity: any) => {
+        if (entity === WorkLog) return mockWorkLogRepository;
+        return mockWorkLogRepository;
+      });
+
+      mockWorkLogRepository.findOne.mockResolvedValue(null);
+
+      // Act & Assert
+      try {
+        await service.update(workLogIdDto, updateWorkLogDto);
+        expect(true).toBe(false); // 에러가 발생해야 함
+      } catch (error) {
+        expect(error.message).toBe('존재하지 않는 업무일지입니다.');
+      }
+    });
+
+    it('여러 필드를 동시에 업데이트', async () => {
+      // Arrange
+      const workLogIdDto = { id: 'worklog-1' };
+      const updateWorkLogDto: UpdateWorkLogDto = {
+        title: 'New Title',
+        contents: 'New contents',
+        workTime: 6,
+        workDate: new Date('2026-01-06'),
+      } as UpdateWorkLogDto;
+
+      const updatedWorkLog = {
+        ...mockWorkLog,
+        title: 'New Title',
+        contents: 'New contents',
+        workTime: 6,
+        workDate: new Date('2026-01-06'),
+      };
+
+      mockQueryRunner.manager.getRepository = jest.fn((entity: any) => {
+        if (entity === WorkLog) return mockWorkLogRepository;
+        return mockWorkLogRepository;
+      });
+
+      mockWorkLogRepository.findOne.mockResolvedValue(mockWorkLog);
+      mockWorkLogRepository.save.mockResolvedValue(updatedWorkLog);
+
+      // Act
+      const result = await service.update(workLogIdDto, updateWorkLogDto);
+
+      // Assert
+      expect(result.title).toBe('New Title');
+      expect(result.contents).toBe('New contents');
+      expect(result.workTime).toBe(6);
+      expect(mockWorkLogRepository.save).toHaveBeenCalled();
     });
   });
 
