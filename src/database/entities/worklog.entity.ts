@@ -1,9 +1,4 @@
-import {
-  Column,
-  Entity,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Member } from './member.entity';
 import { Task } from './task.entity';
 
@@ -21,8 +16,8 @@ export class WorkLog {
   @Column({ type: 'date' })
   createdAt: Date;
 
-  @Column({ type: 'datetime' })
-  workTime: Date;
+  @Column({ type: 'int' })
+  workTime: number;
 
   @Column({ type: 'date' })
   workDate: Date;
