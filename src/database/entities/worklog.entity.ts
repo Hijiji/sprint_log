@@ -23,9 +23,6 @@ export class WorkLog {
   @Column({ type: 'text' })
   contents: string;
 
-  @Column({ type: 'varchar', length: 50 })
-  status: TaskStatusEnum;
-
   @Column({ type: 'date' })
   createdAt: Date;
 
