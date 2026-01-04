@@ -6,6 +6,7 @@ import { Task } from 'src/database/entities/task.entity';
 import { Member } from 'src/database/entities/member.entity';
 import { CreateWorkLogDto } from './dto/create-work-log.dto';
 import { UpdateWorkLogDto } from './dto/update-work-log.dto';
+import { ConfigService } from '@nestjs/config';
 
 describe('WorkLogService', () => {
   let service: WorkLogService;
@@ -76,7 +77,9 @@ describe('WorkLogService', () => {
       where: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
       leftJoinAndSelect: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
       take: jest.fn().mockReturnThis(),
       getMany: jest.fn(),
       getOne: jest.fn(),
@@ -102,7 +105,20 @@ describe('WorkLogService', () => {
     // DataSource Mock
     mockDataSource = {
       createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+      getRepository: jest.fn((entity: any) => {
+        if (entity === WorkLog) return mockWorkLogRepository;
+        if (entity === Task) return mockTaskRepository;
+        if (entity === Member) return mockMemberRepository;
+        return mockWorkLogRepository;
+      }),
     } as any;
+
+    const mockConfigService = {
+      get: jest.fn((key) => {
+        if (key === 'pagination.defaultLimit') return 10;
+        return undefined;
+      }),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -110,6 +126,10 @@ describe('WorkLogService', () => {
         {
           provide: DataSource,
           useValue: mockDataSource,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();
@@ -266,15 +286,295 @@ describe('WorkLogService', () => {
   });
 
   describe('findAll', () => {
-    it('모든 WorkLog 조회', async () => {
+    it('필터링 없이 모든 WorkLog 조회', async () => {
       // Arrange
-      mockWorkLogRepository.find.mockResolvedValue([mockWorkLog]);
+      const mockWorklogs = [
+        {
+          workLogId: 'worklog-1',
+          title: 'WorkLog 1',
+          contents: 'Contents 1',
+          workDate: new Date('2026-01-04'),
+          workTime: 4,
+          createdAt: new Date('2026-01-04'),
+          task: { taskId: 'task-1', title: 'Task 1' },
+          member: { memberId: 'member-1', name: 'John Doe' },
+        },
+        {
+          workLogId: 'worklog-2',
+          title: 'WorkLog 2',
+          contents: 'Contents 2',
+          workDate: new Date('2026-01-05'),
+          workTime: 6,
+          createdAt: new Date('2026-01-05'),
+          task: { taskId: 'task-2', title: 'Task 2' },
+          member: { memberId: 'member-2', name: 'Jane Smith' },
+        },
+      ];
+
+      const findAllWorklogDto = {
+        limit: 10,
+        offset: 0,
+      } as any;
+
+      mockQueryBuilder.getMany.mockResolvedValue(mockWorklogs);
+      mockWorkLogRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder,
+      );
 
       // Act
-      const result = await service.findAll();
+      const result = await service.findAll(findAllWorklogDto);
 
       // Assert
-      expect(result).toContain('This action returns all workLog');
+      expect(result.workLogs.length).toBe(2);
+      expect(result.meta.limit).toBe(10);
+      expect(result.meta.offset).toBe(0);
+      expect(mockWorkLogRepository.createQueryBuilder).toHaveBeenCalledWith(
+        'worklog',
+      );
+      // 실제 반환값 구조 검증
+      expect(result.workLogs[0].task.taskTitle).toBe('Task 1');
+      expect(result.workLogs[0].member.memberName).toBe('John Doe');
+    });
+
+    it('memberName 필터링 적용', async () => {
+      // Arrange
+      const findAllWorklogDto = {
+        limit: 10,
+        offset: 0,
+        memberName: 'John',
+      } as any;
+
+      mockQueryBuilder.getMany.mockResolvedValue([]);
+      mockWorkLogRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder,
+      );
+
+      // Act
+      await service.findAll(findAllWorklogDto);
+
+      // Assert
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'member.name LIKE :memberName',
+        { memberName: '%John%' },
+      );
+    });
+
+    it('taskTitle 필터링 적용', async () => {
+      // Arrange
+      const findAllWorklogDto = {
+        limit: 10,
+        offset: 0,
+        taskTitle: 'Development',
+      } as any;
+
+      mockQueryBuilder.getMany.mockResolvedValue([]);
+      mockWorkLogRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder,
+      );
+
+      // Act
+      await service.findAll(findAllWorklogDto);
+
+      // Assert
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'task.title Like :taskTitle',
+        { taskTitle: '%Development%' },
+      );
+    });
+
+    it('workDate 필터링 적용', async () => {
+      // Arrange
+      const workDate = new Date('2026-01-05');
+      const findAllWorklogDto = {
+        limit: 10,
+        offset: 0,
+        workDate: workDate,
+      } as any;
+
+      mockQueryBuilder.getMany.mockResolvedValue([]);
+      mockWorkLogRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder,
+      );
+
+      // Act
+      await service.findAll(findAllWorklogDto);
+
+      // Assert
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'worklog.workDate = :workDate',
+        { workDate: workDate },
+      );
+    });
+
+    it('여러 필터 동시 적용', async () => {
+      // Arrange
+      const workDate = new Date('2026-01-05');
+      const findAllWorklogDto = {
+        limit: 10,
+        offset: 0,
+        memberName: 'John',
+        taskTitle: 'Development',
+        workDate: workDate,
+      } as any;
+
+      mockQueryBuilder.getMany.mockResolvedValue([]);
+      mockWorkLogRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder,
+      );
+
+      // Act
+      await service.findAll(findAllWorklogDto);
+
+      // Assert
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledTimes(3);
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'member.name LIKE :memberName',
+        { memberName: '%John%' },
+      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'task.title Like :taskTitle',
+        { taskTitle: '%Development%' },
+      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'worklog.workDate = :workDate',
+        { workDate: workDate },
+      );
+    });
+
+    it('offset 페이징 적용', async () => {
+      // Arrange
+      const findAllWorklogDto = {
+        limit: 10,
+        offset: 20,
+      } as any;
+
+      mockQueryBuilder.getMany.mockResolvedValue([]);
+      mockWorkLogRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder,
+      );
+
+      // Act
+      await service.findAll(findAllWorklogDto);
+
+      // Assert
+      expect(mockQueryBuilder.skip).toHaveBeenCalledWith(20);
+      expect(mockQueryBuilder.take).toHaveBeenCalledWith(10);
+    });
+
+    it('정렬 순서 확인 (createdAt DESC, workLogId DESC)', async () => {
+      // Arrange
+      const findAllWorklogDto = {
+        limit: 10,
+        offset: 0,
+      } as any;
+
+      mockQueryBuilder.getMany.mockResolvedValue([]);
+      mockWorkLogRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder,
+      );
+
+      // Act
+      await service.findAll(findAllWorklogDto);
+
+      // Assert
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'worklog.createdAt',
+        'DESC',
+      );
+      expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith(
+        'worklog.workLogId',
+        'DESC',
+      );
+    });
+
+    it('기본 limit 값 사용', async () => {
+      // Arrange
+      const findAllWorklogDto = {
+        offset: 0,
+        // limit 없음
+      } as any;
+
+      mockQueryBuilder.getMany.mockResolvedValue([]);
+      mockWorkLogRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder,
+      );
+
+      // Act
+      await service.findAll(findAllWorklogDto);
+
+      // Assert
+      expect(mockQueryBuilder.take).toHaveBeenCalledWith(10); // defaultLimit
+    });
+
+    it('Task와 Member 관계 로드', async () => {
+      // Arrange
+      const findAllWorklogDto = {
+        limit: 10,
+        offset: 0,
+      } as any;
+
+      mockQueryBuilder.getMany.mockResolvedValue([]);
+      mockWorkLogRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder,
+      );
+
+      // Act
+      await service.findAll(findAllWorklogDto);
+
+      // Assert
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'worklog.task',
+        'task',
+      );
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'worklog.member',
+        'member',
+      );
+    });
+
+    it('삭제되지 않은 WorkLog만 조회 (isDeleted: false)', async () => {
+      // Arrange
+      const findAllWorklogDto = {
+        limit: 10,
+        offset: 0,
+      } as any;
+
+      mockQueryBuilder.getMany.mockResolvedValue([]);
+      mockWorkLogRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder,
+      );
+
+      // Act
+      await service.findAll(findAllWorklogDto);
+
+      // Assert
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'task.isDeleted = :isDeleted',
+        { isDeleted: false },
+      );
+    });
+
+    it('메타데이터 반환 검증', async () => {
+      // Arrange
+      const mockWorklogs = [mockWorkLog];
+      const findAllWorklogDto = {
+        limit: 10,
+        offset: 0,
+      } as any;
+
+      mockQueryBuilder.getMany.mockResolvedValue(mockWorklogs);
+      mockWorkLogRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder,
+      );
+
+      // Act
+      const result = await service.findAll(findAllWorklogDto);
+
+      // Assert
+      expect(result.meta).toBeDefined();
+      expect(result.meta.limit).toBe(10);
+      expect(result.meta.offset).toBe(0);
+      expect(result.workLogs.length).toBe(1);
     });
   });
 
@@ -307,7 +607,7 @@ describe('WorkLogService', () => {
           deletedAt: true,
           member: { memberId: true, name: true },
         },
-        where: { workLogId: 'worklog-1' },
+        where: { workLogId: 'worklog-1', isDeleted: false },
         relations: ['member'],
       });
     });
@@ -394,7 +694,7 @@ describe('WorkLogService', () => {
       // Assert
       expect(result.title).toBe('Updated Title');
       expect(mockWorkLogRepository.findOne).toHaveBeenCalledWith({
-        where: { workLogId: 'worklog-1' },
+        where: { workLogId: 'worklog-1', isDeleted: false },
       });
       expect(mockWorkLogRepository.save).toHaveBeenCalled();
     });
@@ -545,13 +845,112 @@ describe('WorkLogService', () => {
   });
 
   describe('remove', () => {
-    it('WorkLog 삭제 (소프트 삭제)', async () => {
+    it('WorkLog 소프트 삭제 성공', async () => {
       // Arrange
+      const workLogIdDto = { id: 'worklog-1' };
+      const now = new Date();
+
+      const deletedWorkLog = {
+        ...mockWorkLog,
+        isDeleted: true,
+        deletedAt: now,
+      };
+
+      mockQueryRunner.manager.getRepository = jest.fn((entity: any) => {
+        if (entity === WorkLog) return mockWorkLogRepository;
+        return mockWorkLogRepository;
+      });
+
+      mockWorkLogRepository.findOne.mockResolvedValue(mockWorkLog);
+      mockWorkLogRepository.save.mockResolvedValue(deletedWorkLog);
+
       // Act
-      const result = await service.remove(1);
+      const result = await service.remove(workLogIdDto);
 
       // Assert
-      expect(result).toContain('This action removes a #1 workLog');
+      expect(result.isDeleted).toBe(true);
+      expect(result.deletedAt).toBeDefined();
+      expect(mockWorkLogRepository.findOne).toHaveBeenCalledWith({
+        where: { workLogId: 'worklog-1', isDeleted: false },
+      });
+      expect(mockWorkLogRepository.save).toHaveBeenCalled();
+    });
+
+    it('존재하지 않는 WorkLog 삭제 시 에러 발생', async () => {
+      // Arrange
+      const workLogIdDto = { id: 'non-existent-worklog' };
+
+      mockQueryRunner.manager.getRepository = jest.fn((entity: any) => {
+        if (entity === WorkLog) return mockWorkLogRepository;
+        return mockWorkLogRepository;
+      });
+
+      mockWorkLogRepository.findOne.mockResolvedValue(null);
+
+      // Act & Assert
+      try {
+        await service.remove(workLogIdDto);
+        expect(true).toBe(false); // 에러가 발생해야 함
+      } catch (error) {
+        expect(error.message).toBe('존재하지 않는 업무일지입니다.');
+      }
+    });
+
+    it('이미 삭제된 WorkLog 다시 삭제 시도 시 에러 발생', async () => {
+      // Arrange
+      const workLogIdDto = { id: 'worklog-1' };
+      const deletedWorkLog = {
+        ...mockWorkLog,
+        isDeleted: true,
+        deletedAt: new Date('2026-01-03'),
+      };
+
+      mockQueryRunner.manager.getRepository = jest.fn((entity: any) => {
+        if (entity === WorkLog) return mockWorkLogRepository;
+        return mockWorkLogRepository;
+      });
+
+      // 이미 삭제된 항목은 findOne에서 반환되지 않음 (where 조건에서 isDeleted: false)
+      mockWorkLogRepository.findOne.mockResolvedValue(null);
+
+      // Act & Assert
+      try {
+        await service.remove(workLogIdDto);
+        expect(true).toBe(false); // 에러가 발생해야 함
+      } catch (error) {
+        expect(error.message).toBe('존재하지 않는 업무일지입니다.');
+      }
+    });
+
+    it('deletedAt이 현재 시간으로 설정', async () => {
+      // Arrange
+      const workLogIdDto = { id: 'worklog-1' };
+      const beforeDelete = new Date();
+
+      const deletedWorkLog = {
+        ...mockWorkLog,
+        isDeleted: true,
+        deletedAt: new Date(),
+      };
+
+      mockQueryRunner.manager.getRepository = jest.fn((entity: any) => {
+        if (entity === WorkLog) return mockWorkLogRepository;
+        return mockWorkLogRepository;
+      });
+
+      mockWorkLogRepository.findOne.mockResolvedValue(mockWorkLog);
+      mockWorkLogRepository.save.mockResolvedValue(deletedWorkLog);
+
+      // Act
+      const result = await service.remove(workLogIdDto);
+
+      // Assert
+      expect(result.deletedAt.getTime()).toBeGreaterThanOrEqual(
+        beforeDelete.getTime(),
+      );
+      expect(result.deletedAt.getTime()).toBeLessThanOrEqual(
+        new Date().getTime(),
+      );
     });
   });
 });

@@ -430,7 +430,7 @@ describe('TaskService', () => {
         taskId: 'task-1',
         title: 'Task with Sprint',
         sprint: mockSprint,
-        members: mockMember,
+        member: mockMember,
         isBackLog: false,
       };
 
@@ -444,7 +444,7 @@ describe('TaskService', () => {
 
       // Assert
       expect(result.sprint).toBe(mockSprint);
-      expect(result.members).toBe(mockMember);
+      expect(result.member).toBe(mockMember);
       expect(result.isBackLog).toBe(false);
       expect(mockSprintRepository.findOne).toHaveBeenCalledWith({
         where: { sprintId },
@@ -735,7 +735,7 @@ describe('TaskService', () => {
       const existingTask = {
         taskId,
         title: 'Task',
-        members: null,
+        member: null,
         updatedAt: null,
       };
 
@@ -758,7 +758,7 @@ describe('TaskService', () => {
       expect(mockMemberRepository.findOne).toHaveBeenCalledWith({
         where: { memberId },
       });
-      expect(existingTask.members).toBe(mockMember);
+      expect(existingTask.member).toBe(mockMember);
     });
 
     it('존재하지 않는 업무 수정 시 에러 발생', async () => {
@@ -885,7 +885,7 @@ describe('TaskService', () => {
         title: 'Test Task',
         description: 'Test Description',
         status: TaskStatusEnum.ACTIVE,
-        members: { memberId: 'member-1', name: 'John' },
+        member: { memberId: 'member-1', name: 'John' },
       };
       const mockWorklogs = [
         { workLogId: 'log-1', title: 'Worklog 1', createdAt: new Date() },
@@ -902,10 +902,10 @@ describe('TaskService', () => {
       expect(result).toBeDefined();
       expect(result.taskId).toBe(taskId);
       expect(result.title).toBe('Test Task');
-      expect(result.members).toBeDefined();
-      expect(result.members.name).toBe('John');
-      expect(result.worklog).toHaveLength(2);
-      expect(result.worklog[0].title).toBe('Worklog 1');
+      expect(result.member).toBeDefined();
+      expect(result.member.name).toBe('John');
+      expect(result.worklogs).toHaveLength(2);
+      expect(result.worklogs[0].title).toBe('Worklog 1');
     });
 
     it('존재하지 않는 업무 조회 시 에러 발생', async () => {
@@ -936,8 +936,8 @@ describe('TaskService', () => {
       const result = await service.findOne(taskIdDto);
 
       // Assert
-      expect(result.worklog).toHaveLength(0);
-      expect(Array.isArray(result.worklog)).toBe(true);
+      expect(result.worklogs).toHaveLength(0);
+      expect(Array.isArray(result.worklogs)).toBe(true);
     });
   });
 });
