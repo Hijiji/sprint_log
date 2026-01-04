@@ -131,8 +131,46 @@ export class TaskService {
     };
   }
 
-  findOne(taskIdDto: TaskIdDto) {
-    return `This action returns a #${taskIdDto.id} task`;
+  /**
+   * 업무 상세 조회
+   * @param taskIdDto
+   * @returns
+   */
+  async findOne(taskIdDto: TaskIdDto) {
+    const taskRepository = this.dataSource.getRepository(Task);
+    const worklogRepository = this.dataSource.getRepository(WorkLog);
+    const task = await taskRepository.findOne({
+      select: {
+        taskId: true,
+        title: true,
+        description: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        expectedStartDate: true,
+        expectedEndDate: true,
+        expectedWorkTime: true,
+        startDate: true,
+        endDate: true,
+        isBackLog: true,
+        priority: true,
+        members: { memberId: true, name: true },
+      },
+      where: { taskId: taskIdDto.id, isDeleted: false },
+      relations: ['members'],
+    });
+
+    if (!task) throw new BadRequestException('존재하지 않는 업무입니다.');
+
+    const worklogs = await worklogRepository.find({
+      where: { task: { taskId: taskIdDto.id }, isDeleted: false },
+      select: ['workLogId', 'title', 'workTime', 'workDate'],
+    });
+
+    // task 객체에 worklogs 추가
+    task.worklog = worklogs;
+
+    return task;
   }
 
   /**
