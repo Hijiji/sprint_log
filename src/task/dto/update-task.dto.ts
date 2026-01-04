@@ -16,7 +16,7 @@ import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
 export class UpdateTaskDto {
   @ApiProperty({ example: '2026년 01월 인사시스템 개발', maxLength: 100 })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @MinLength(2)
   @MaxLength(100)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))

@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsEnum,
-  IsNotEmpty,
   IsOptional,
   IsString,
   Matches,
@@ -13,7 +12,7 @@ import { SprintStatusEnum } from 'src/common/enum/sprint-status.enum';
 export class UpdateSprintDto {
   @ApiProperty({ example: '2026년 01월 인사시스템 개발', maxLength: 100 })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @MinLength(2)
   @MaxLength(100)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
