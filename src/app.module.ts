@@ -7,6 +7,7 @@ import configuration from './config/configuration';
 import { validationSchema } from './config/validation';
 import { SprintModule } from './sprint/sprint.module';
 import { TaskModule } from './task/task.module';
+import { WorkLogModule } from './work-log/work-log.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TaskModule } from './task/task.module';
     DatabaseModule,
     SprintModule,
     TaskModule,
+    WorkLogModule,
   ],
   controllers: [AppController],
   providers: [AppService],
