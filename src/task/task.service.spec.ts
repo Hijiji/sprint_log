@@ -340,6 +340,206 @@ describe('TaskService', () => {
     });
   });
 
+  describe('create', () => {
+    let mockTaskRepository: any;
+    let mockSprintRepository: any;
+    let mockMemberRepository: any;
+    let mockManager: any;
+    let mockQueryRunner: any;
+
+    beforeEach(() => {
+      mockTaskRepository = {
+        create: jest.fn().mockReturnValue({ taskId: 'task-1' }),
+        save: jest.fn(),
+      };
+
+      mockSprintRepository = {
+        findOne: jest.fn(),
+      };
+
+      mockMemberRepository = {
+        findOne: jest.fn(),
+      };
+
+      mockQueryRunner = {
+        connect: jest.fn().mockResolvedValue(undefined),
+        startTransaction: jest.fn().mockResolvedValue(undefined),
+        commitTransaction: jest.fn().mockResolvedValue(undefined),
+        rollbackTransaction: jest.fn().mockResolvedValue(undefined),
+        release: jest.fn().mockResolvedValue(undefined),
+        manager: {
+          getRepository: jest.fn((entity: any) => {
+            if (entity === Task) return mockTaskRepository;
+            if (entity === Sprint) return mockSprintRepository;
+            if (entity === Member) return mockMemberRepository;
+            return mockTaskRepository;
+          }),
+        },
+      };
+
+      mockDataSource.createQueryRunner = jest
+        .fn()
+        .mockReturnValue(mockQueryRunner);
+    });
+
+    it('기본 필드만으로 업무 생성', async () => {
+      // Arrange
+      const CreateTaskDto = {
+        title: 'New Task',
+        description: 'Task Description',
+      };
+
+      const createdTask = {
+        taskId: 'task-1',
+        title: 'New Task',
+        description: 'Task Description',
+        status: TaskStatusEnum.PLANNED,
+        isBackLog: true,
+        sprint: null,
+        members: null,
+      };
+
+      mockTaskRepository.create.mockReturnValue(createdTask);
+      mockTaskRepository.save.mockResolvedValue(createdTask);
+
+      // Act
+      const result = await service.create(CreateTaskDto as any);
+
+      // Assert
+      expect(result.title).toBe('New Task');
+      expect(result.status).toBe(TaskStatusEnum.PLANNED);
+      expect(result.isBackLog).toBe(true);
+      expect(mockTaskRepository.create).toHaveBeenCalled();
+      expect(mockTaskRepository.save).toHaveBeenCalled();
+    });
+
+    it('스프린트와 멤버를 함께 생성', async () => {
+      // Arrange
+      const sprintId = 'sprint-1';
+      const memberId = 'member-1';
+      const mockSprint = { sprintId, title: 'Sprint 1' };
+      const mockMember = { memberId, name: 'John' };
+
+      const createTaskDto = {
+        title: 'Task with Sprint',
+        sprintId,
+        memberId,
+      };
+
+      const createdTask = {
+        taskId: 'task-1',
+        title: 'Task with Sprint',
+        sprint: mockSprint,
+        members: mockMember,
+        isBackLog: false,
+      };
+
+      mockSprintRepository.findOne.mockResolvedValue(mockSprint);
+      mockMemberRepository.findOne.mockResolvedValue(mockMember);
+      mockTaskRepository.create.mockReturnValue(createdTask);
+      mockTaskRepository.save.mockResolvedValue(createdTask);
+
+      // Act
+      const result = await service.create(createTaskDto as any);
+
+      // Assert
+      expect(result.sprint).toBe(mockSprint);
+      expect(result.members).toBe(mockMember);
+      expect(result.isBackLog).toBe(false);
+      expect(mockSprintRepository.findOne).toHaveBeenCalledWith({
+        where: { sprintId },
+      });
+    });
+
+    it('상태가 ACTIVE일 때 startDate 자동 설정', async () => {
+      // Arrange
+      const createTaskDto = {
+        title: 'Active Task',
+        status: TaskStatusEnum.ACTIVE,
+      };
+
+      const createdTask = {
+        taskId: 'task-1',
+        title: 'Active Task',
+        status: TaskStatusEnum.ACTIVE,
+        startDate: expect.any(Date),
+        endDate: null,
+      };
+
+      mockTaskRepository.create.mockReturnValue(createdTask);
+      mockTaskRepository.save.mockResolvedValue(createdTask);
+
+      // Act
+      const result = await service.create(createTaskDto as any);
+
+      // Assert
+      expect(result.startDate).toBeDefined();
+      expect(result.status).toBe(TaskStatusEnum.ACTIVE);
+    });
+
+    it('상태가 COMPLETED일 때 endDate 자동 설정', async () => {
+      // Arrange
+      const createTaskDto = {
+        title: 'Completed Task',
+        status: TaskStatusEnum.COMPLETED,
+      };
+
+      const createdTask = {
+        taskId: 'task-1',
+        title: 'Completed Task',
+        status: TaskStatusEnum.COMPLETED,
+        startDate: null,
+        endDate: expect.any(Date),
+      };
+
+      mockTaskRepository.create.mockReturnValue(createdTask);
+      mockTaskRepository.save.mockResolvedValue(createdTask);
+
+      // Act
+      const result = await service.create(createTaskDto as any);
+
+      // Assert
+      expect(result.endDate).toBeDefined();
+      expect(result.status).toBe(TaskStatusEnum.COMPLETED);
+    });
+
+    it('예상 날짜 검증 - 시작일이 종료일보다 늦을 경우 에러', async () => {
+      // Arrange
+      const createTaskDto = {
+        title: 'Task',
+        expectedStartDate: new Date('2026-01-10'),
+        expectedEndDate: new Date('2026-01-05'),
+      };
+
+      // Act & Assert
+      await expect(service.create(createTaskDto as any)).rejects.toThrow(
+        '종료 예정일은 시작 예정일보다 늦어야 합니다.',
+      );
+    });
+
+    it('expectedWorkTime 기본값 0으로 설정', async () => {
+      // Arrange
+      const createTaskDto = {
+        title: 'Task without worktime',
+      };
+
+      const createdTask = {
+        taskId: 'task-1',
+        title: 'Task without worktime',
+        expectedWorkTime: 0,
+      };
+
+      mockTaskRepository.create.mockReturnValue(createdTask);
+      mockTaskRepository.save.mockResolvedValue(createdTask);
+
+      // Act
+      const result = await service.create(createTaskDto as any);
+
+      // Assert
+      expect(result.expectedWorkTime).toBe(0);
+    });
+  });
+
   describe('update', () => {
     let mockTaskRepository: any;
     let mockSprintRepository: any;
