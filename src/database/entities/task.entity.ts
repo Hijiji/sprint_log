@@ -68,9 +68,9 @@ export class Task {
   sprint: Sprint;
 
   @OneToMany(() => WorkLog, (worklog) => worklog.task)
-  worklog: WorkLog[];
+  worklogs: WorkLog[];
 
-  @OneToOne(() => Member, (member) => member.tasks)
+  @OneToOne(() => Member, (member) => member.task)
   @JoinColumn({ name: 'memberId' })
-  members: Member;
+  member: Member;
 }

@@ -28,7 +28,7 @@ export class WorkLog {
   @Column({ type: 'datetime', nullable: true })
   deletedAt: Date;
 
-  @ManyToOne(() => Task, (task) => task.worklog)
+  @ManyToOne(() => Task, (task) => task.worklogs)
   task: Task;
 
   @ManyToOne(() => Member)
