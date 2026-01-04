@@ -32,31 +32,28 @@ export class TaskController {
   }
 
   @Get(':id')
-  findOne(@Param('id') taskIdDto: TaskIdDto) {
+  findOne(@Param() taskIdDto: TaskIdDto) {
     return this.taskService.findOne(taskIdDto);
   }
 
   @Patch(':id')
-  update(
-    @Param('id') taskIdDto: TaskIdDto,
-    @Body() updateTaskDto: UpdateTaskDto,
-  ) {
+  update(@Param() taskIdDto: TaskIdDto, @Body() updateTaskDto: UpdateTaskDto) {
     return this.taskService.update(taskIdDto, updateTaskDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') taskIdDto: TaskIdDto) {
+  remove(@Param() taskIdDto: TaskIdDto) {
     return this.taskService.remove(taskIdDto, false);
   }
 
   @Delete(':id/work-logs')
-  removeAll(@Param('id') taskIdDto: TaskIdDto) {
+  removeAll(@Param() taskIdDto: TaskIdDto) {
     return this.taskService.remove(taskIdDto, true);
   }
 
   @Post(':id/assign-sprint')
   assignSprint(
-    @Param('id') taskIdDto: TaskIdDto,
+    @Param() taskIdDto: TaskIdDto,
     @Body() assignSprintDto: AssignSprintDto,
   ) {
     return this.taskService.assignSprint(
@@ -66,7 +63,7 @@ export class TaskController {
   }
 
   @Delete(':id/assign-sprint')
-  removeAssignSprint(@Param('id') taskIdDto: TaskIdDto) {
+  removeAssignSprint(@Param() taskIdDto: TaskIdDto) {
     return this.taskService.removeAssignSprint(taskIdDto);
   }
 }
