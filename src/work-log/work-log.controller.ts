@@ -6,12 +6,14 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { WorkLogService } from './work-log.service';
 import { CreateWorkLogDto } from './dto/create-work-log.dto';
 import { UpdateWorkLogDto } from './dto/update-work-log.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { WorkLogIdDto } from './dto/worklog-id.dto';
+import { FindAllWorklogDto } from './dto/find-all-worklog.dto';
 
 @ApiTags('work-logs')
 @Controller('work-log')
@@ -24,8 +26,8 @@ export class WorkLogController {
   }
 
   @Get()
-  findAll() {
-    return this.workLogService.findAll();
+  findAll(@Query() findAllWorklogDto: FindAllWorklogDto) {
+    return this.workLogService.findAll(findAllWorklogDto);
   }
 
   @Get(':id')
