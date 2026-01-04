@@ -34,8 +34,11 @@ export class WorkLogController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateWorkLogDto: UpdateWorkLogDto) {
-    return this.workLogService.update(+id, updateWorkLogDto);
+  update(
+    @Param() workLogIdDto: WorkLogIdDto,
+    @Body() updateWorkLogDto: UpdateWorkLogDto,
+  ) {
+    return this.workLogService.update(workLogIdDto, updateWorkLogDto);
   }
 
   @Delete(':id')

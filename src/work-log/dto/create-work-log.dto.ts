@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
-  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -10,8 +9,6 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { TaskPriorityEnum } from 'src/common/enum/task-priotity.enum';
-import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
 export class CreateWorkLogDto {
   @ApiProperty({ example: '2026년 01월 인사시스템 개발', maxLength: 100 })
   @IsString()

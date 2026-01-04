@@ -1,4 +1,56 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateWorkLogDto } from './create-work-log.dto';
+import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
+export class UpdateWorkLogDto {
+  @ApiProperty({ example: '2026년 01월 인사시스템 개발', maxLength: 100 })
+  @IsString()
+  @IsOptional()
+  @MinLength(2)
+  @MaxLength(100)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  title: string;
 
-export class UpdateWorkLogDto extends PartialType(CreateWorkLogDto) {}
+  @ApiProperty({
+    example: '업무일지에 대한 설명을 입력하세요.',
+    maxLength: 2000,
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(2000)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  contents: string;
+
+  @ApiProperty({
+    example: '2026-01-02',
+    description: '업무일, YYYY-MM-DD 형식의 문자열',
+  })
+  @IsString()
+  @IsOptional()
+  @Matches(/^$|^\d{4}-\d{2}-\d{2}$/)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  workDate: Date;
+
+  @ApiProperty({
+    example: '4',
+    description: '작업시간',
+  })
+  @IsNumber()
+  @IsOptional()
+  workTime: number;
+
+  @ApiProperty({
+    example: 'task-123',
+    description: '업무 ID',
+  })
+  @IsString()
+  @IsOptional()
+  taskId: string;
+}

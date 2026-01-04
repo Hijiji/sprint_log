@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateWorkLogDto } from './dto/create-work-log.dto';
 import { UpdateWorkLogDto } from './dto/update-work-log.dto';
 import { runInTransaction } from 'src/common/database/transaction.helper';
@@ -83,8 +83,34 @@ export class WorkLogService {
     });
   }
 
-  update(id: number, updateWorkLogDto: UpdateWorkLogDto) {
-    return `This action updates a #${id} workLog`;
+  /**
+   * 업무 일지 수정
+   * @param workLogIdDto
+   * @param updateWorkLogDto
+   * @returns
+   */
+  async update(workLogIdDto: WorkLogIdDto, updateWorkLogDto: UpdateWorkLogDto) {
+    return runInTransaction(this.dataSource, async (manager) => {
+      const workLogRepository = manager.getRepository(WorkLog);
+
+      const worklog = await workLogRepository.findOne({
+        where: { workLogId: workLogIdDto.id },
+      });
+
+      if (!worklog) {
+        throw new BadRequestException('존재하지 않는 업무일지입니다.');
+      }
+      if (updateWorkLogDto.title != undefined)
+        worklog.title = updateWorkLogDto.title ?? worklog.title;
+      if (updateWorkLogDto.contents != undefined)
+        worklog.contents = updateWorkLogDto.contents ?? worklog.contents;
+      if (updateWorkLogDto.workDate != undefined)
+        worklog.workDate = updateWorkLogDto.workDate ?? worklog.workDate;
+      if (updateWorkLogDto.workTime != undefined)
+        worklog.workTime = updateWorkLogDto.workTime ?? worklog.workTime;
+
+      return workLogRepository.save(worklog);
+    });
   }
 
   remove(id: number) {
