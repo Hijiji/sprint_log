@@ -279,13 +279,91 @@ describe('WorkLogService', () => {
   });
 
   describe('findOne', () => {
-    it('특정 WorkLog 조회', async () => {
+    it('특정 WorkLog 조회 성공', async () => {
       // Arrange
+      const workLogIdDto = { id: 'worklog-1' };
+
+      mockQueryRunner.manager.getRepository = jest.fn((entity: any) => {
+        if (entity === WorkLog) return mockWorkLogRepository;
+        return mockWorkLogRepository;
+      });
+
+      mockWorkLogRepository.findOne.mockResolvedValue(mockWorkLog);
+
       // Act
-      const result = await service.findOne(1);
+      const result = await service.findOne(workLogIdDto);
 
       // Assert
-      expect(result).toContain('This action returns a #1 workLog');
+      expect(result).toEqual(mockWorkLog);
+      expect(mockWorkLogRepository.findOne).toHaveBeenCalledWith({
+        select: {
+          workLogId: true,
+          title: true,
+          contents: true,
+          createdAt: true,
+          workTime: true,
+          workDate: true,
+          isDeleted: true,
+          deletedAt: true,
+          member: { memberId: true, name: true },
+        },
+        where: { workLogId: 'worklog-1' },
+        relations: ['member'],
+      });
+    });
+
+    it('존재하지 않는 WorkLog 조회 시 에러 발생', async () => {
+      // Arrange
+      const workLogIdDto = { id: 'non-existent-worklog' };
+
+      mockQueryRunner.manager.getRepository = jest.fn((entity: any) => {
+        if (entity === WorkLog) return mockWorkLogRepository;
+        return mockWorkLogRepository;
+      });
+
+      mockWorkLogRepository.findOne.mockResolvedValue(null);
+
+      // Act & Assert
+      try {
+        await service.findOne(workLogIdDto);
+        expect(true).toBe(false); // 에러가 발생해야 함
+      } catch (error) {
+        // 에러가 발생하면 통과
+        expect(error).toBeDefined();
+      }
+    });
+
+    it('WorkLog와 Task, Member 정보 함께 조회', async () => {
+      // Arrange
+      const workLogIdDto = { id: 'worklog-1' };
+
+      const workLogWithRelations = {
+        ...mockWorkLog,
+        task: {
+          taskId: 'task-1',
+          title: 'Related Task',
+        },
+        member: {
+          memberId: 'member-1',
+          name: 'John Doe',
+        },
+      };
+
+      mockQueryRunner.manager.getRepository = jest.fn((entity: any) => {
+        if (entity === WorkLog) return mockWorkLogRepository;
+        return mockWorkLogRepository;
+      });
+
+      mockWorkLogRepository.findOne.mockResolvedValue(workLogWithRelations);
+
+      // Act
+      const result = await service.findOne(workLogIdDto);
+
+      // Assert
+      expect(result.member).toBeDefined();
+      expect(result.member.memberId).toBe('member-1');
+      expect(result.member.name).toBe('John Doe');
+      expect(mockWorkLogRepository.findOne).toHaveBeenCalled();
     });
   });
 
