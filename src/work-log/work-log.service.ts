@@ -6,10 +6,17 @@ import { DataSource } from 'typeorm';
 import { WorkLog } from 'src/database/entities/worklog.entity';
 import { Member } from 'src/database/entities/member.entity';
 import { Task } from 'src/database/entities/task.entity';
+import { WorkLogIdDto } from './dto/worklog-id.dto';
 
 @Injectable()
 export class WorkLogService {
   constructor(private readonly dataSource: DataSource) {}
+
+  /**
+   * 업무 일지 생성
+   * @param createWorkLogDto
+   * @returns
+   */
   async create(createWorkLogDto: CreateWorkLogDto) {
     return runInTransaction(this.dataSource, async (manager) => {
       const workLogRepository = manager.getRepository(WorkLog);
@@ -47,8 +54,33 @@ export class WorkLogService {
     return `This action returns all workLog`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} workLog`;
+  /**
+   * 업무 일지 하나 조회
+   * @param workLogIdDto
+   * @returns
+   */
+  async findOne(workLogIdDto: WorkLogIdDto) {
+    return runInTransaction(this.dataSource, async (manager) => {
+      const workLogRepository = manager.getRepository(WorkLog);
+
+      const worklog = await workLogRepository.findOne({
+        select: {
+          workLogId: true,
+          title: true,
+          contents: true,
+          createdAt: true,
+          workTime: true,
+          workDate: true,
+          isDeleted: true,
+          deletedAt: true,
+          member: { memberId: true, name: true },
+        },
+        where: { workLogId: workLogIdDto.id },
+        relations: ['member'],
+      });
+
+      return worklog;
+    });
   }
 
   update(id: number, updateWorkLogDto: UpdateWorkLogDto) {

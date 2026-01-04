@@ -11,6 +11,7 @@ import { WorkLogService } from './work-log.service';
 import { CreateWorkLogDto } from './dto/create-work-log.dto';
 import { UpdateWorkLogDto } from './dto/update-work-log.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { WorkLogIdDto } from './dto/worklog-id.dto';
 
 @ApiTags('work-logs')
 @Controller('work-log')
@@ -28,8 +29,8 @@ export class WorkLogController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.workLogService.findOne(+id);
+  findOne(@Param() workLogIdDto: WorkLogIdDto) {
+    return this.workLogService.findOne(workLogIdDto);
   }
 
   @Patch(':id')
