@@ -42,7 +42,7 @@ export class WorkLogController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.workLogService.remove(+id);
+  remove(@Param() workLogIdDto: WorkLogIdDto) {
+    return this.workLogService.remove(workLogIdDto);
   }
 }

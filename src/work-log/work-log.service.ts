@@ -113,7 +113,23 @@ export class WorkLogService {
     });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} workLog`;
+  /**
+   * 업무 일지 삭제 - soft delete
+   * @param workLogIdDto
+   * @returns
+   */
+  async remove(workLogIdDto: WorkLogIdDto) {
+    return runInTransaction(this.dataSource, async (manager) => {
+      const workLogRepository = manager.getRepository(WorkLog);
+      const worklog = await workLogRepository.findOne({
+        where: { workLogId: workLogIdDto.id },
+      });
+      if (!worklog) {
+        throw new BadRequestException('존재하지 않는 업무일지입니다.');
+      }
+      worklog.isDeleted = true;
+      worklog.deletedAt = new Date();
+      return workLogRepository.save(worklog);
+    });
   }
 }
