@@ -65,7 +65,7 @@ export class TaskService {
         priority: createTaskDto.priority || null,
         isBackLog: !createTaskDto.sprintId, // sprint이 없으면 백로그
         sprint,
-        members: member,
+        member: member,
       });
 
       return taskRepository.save(task);
@@ -82,7 +82,7 @@ export class TaskService {
     const queryBuilder = taskRepository
       .createQueryBuilder('task')
       .leftJoinAndSelect('task.sprint', 'sprint')
-      .leftJoinAndSelect('task.members', 'member')
+      .leftJoinAndSelect('task.member', 'member')
       .where('task.isDeleted = :isDeleted', { isDeleted: false });
 
     // 필터링
@@ -154,10 +154,10 @@ export class TaskService {
         endDate: true,
         isBackLog: true,
         priority: true,
-        members: { memberId: true, name: true },
+        member: { memberId: true, name: true },
       },
       where: { taskId: taskIdDto.id, isDeleted: false },
-      relations: ['members'],
+      relations: ['member'],
     });
 
     if (!task) throw new BadRequestException('존재하지 않는 업무입니다.');
@@ -168,7 +168,7 @@ export class TaskService {
     });
 
     // task 객체에 worklogs 추가
-    task.worklog = worklogs;
+    task.worklogs = worklogs;
 
     return task;
   }
@@ -255,9 +255,9 @@ export class TaskService {
           });
           if (!member)
             throw new BadRequestException('존재하지 않는 사용자입니다.');
-          task.members = member;
+          task.member = member;
         } else {
-          task.members = null;
+          task.member = null;
         }
       }
 
