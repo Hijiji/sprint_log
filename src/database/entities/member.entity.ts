@@ -49,6 +49,6 @@ export class Member {
   @OneToOne(() => Task, (task) => task.members)
   tasks: Task;
 
-  @OneToOne(() => WorkLog, (worklog) => worklog.member)
-  worklog: WorkLog;
+  @OneToMany(() => WorkLog, (worklog) => worklog.member)
+  workLogs: WorkLog[];
 }

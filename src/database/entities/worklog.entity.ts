@@ -2,14 +2,9 @@ import {
   Column,
   Entity,
   ManyToOne,
-  OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Member } from './member.entity';
-import { Sprint } from './sprint.entity';
-import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
-import { TaskPriorityEnum } from 'src/common/enum/task-priotity.enum';
 import { Task } from './task.entity';
 
 @Entity('worklogs')
@@ -17,10 +12,10 @@ export class WorkLog {
   @PrimaryGeneratedColumn('uuid')
   workLogId: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   title: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   contents: string;
 
   @Column({ type: 'date' })
@@ -32,7 +27,7 @@ export class WorkLog {
   @Column({ type: 'date' })
   workDate: Date;
 
-  @Column({ type: 'boolean' })
+  @Column({ type: 'boolean', default: false })
   isDeleted: boolean;
 
   @Column({ type: 'datetime', nullable: true })
@@ -41,6 +36,6 @@ export class WorkLog {
   @ManyToOne(() => Task, (task) => task.worklog)
   task: Task;
 
-  @OneToOne(() => Member, (member) => member.worklog)
+  @ManyToOne(() => Member)
   member: Member;
 }
