@@ -75,7 +75,7 @@ export class WorkLogService {
           deletedAt: true,
           member: { memberId: true, name: true },
         },
-        where: { workLogId: workLogIdDto.id },
+        where: { workLogId: workLogIdDto.id, isDeleted: false },
         relations: ['member'],
       });
 
@@ -94,7 +94,7 @@ export class WorkLogService {
       const workLogRepository = manager.getRepository(WorkLog);
 
       const worklog = await workLogRepository.findOne({
-        where: { workLogId: workLogIdDto.id },
+        where: { workLogId: workLogIdDto.id, isDeleted: false },
       });
 
       if (!worklog) {
@@ -122,7 +122,7 @@ export class WorkLogService {
     return runInTransaction(this.dataSource, async (manager) => {
       const workLogRepository = manager.getRepository(WorkLog);
       const worklog = await workLogRepository.findOne({
-        where: { workLogId: workLogIdDto.id },
+        where: { workLogId: workLogIdDto.id, isDeleted: false },
       });
       if (!worklog) {
         throw new BadRequestException('존재하지 않는 업무일지입니다.');
