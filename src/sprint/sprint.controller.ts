@@ -31,7 +31,7 @@ export class SprintController {
   }
 
   @Get(':id')
-  findOne(@Param('id') sprintIdDto: SprintIdDto) {
+  findOne(@Param() sprintIdDto: SprintIdDto) {
     return this.sprintService.findOne(sprintIdDto);
   }
 
