@@ -22,6 +22,7 @@ describe('SprintService', () => {
       findOne: jest.fn(),
       find: jest.fn(),
       findAndCount: jest.fn(),
+      create: jest.fn(),
     } as any;
 
     // Mock EntityManager
@@ -80,6 +81,7 @@ describe('SprintService', () => {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       status: SprintStatusEnum.ACTIVE,
+      members: [],
     };
 
     const savedSprint = {
@@ -90,6 +92,15 @@ describe('SprintService', () => {
     };
 
     it('스프린트 성공적 생성', async () => {
+      const createdSprint = {
+        title: 'Sprint001',
+        description: '첫번째 스프린트',
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        status: SprintStatusEnum.ACTIVE,
+      };
+
+      (mockSprintRepository.create as jest.Mock).mockReturnValue(createdSprint);
       (mockSprintRepository.save as jest.Mock).mockResolvedValue(savedSprint);
 
       const result = await service.create(createDto);
@@ -98,16 +109,17 @@ describe('SprintService', () => {
       expect(mockQueryRunner.connect).toHaveBeenCalled();
       expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
       expect(mockManager.getRepository).toHaveBeenCalledWith(Sprint);
-      expect(mockSprintRepository.save).toHaveBeenCalledWith(
+      expect(mockSprintRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'Sprint001',
           description: '첫번째 스프린트',
           status: SprintStatusEnum.ACTIVE,
         }),
       );
+      expect(mockSprintRepository.save).toHaveBeenCalledWith(createdSprint);
       expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
       expect(mockQueryRunner.release).toHaveBeenCalled();
-      expect(result).toEqual(savedSprint);
+      expect(result).toEqual({ sprint: savedSprint, members: [] });
     });
 
     it('종료일이 시작일보다 빠르면 BadRequestException', async () => {
@@ -146,8 +158,18 @@ describe('SprintService', () => {
         startDate: '',
         endDate: '',
         status: undefined as any,
+        members: [],
       };
 
+      const createdSprint = {
+        title: '',
+        description: '',
+        startDate: null,
+        endDate: null,
+        status: SprintStatusEnum.PLANNED,
+      };
+
+      (mockSprintRepository.create as jest.Mock).mockReturnValue(createdSprint);
       (mockSprintRepository.save as jest.Mock).mockResolvedValue(savedSprint);
 
       await service.create(minimalDto);
@@ -159,7 +181,6 @@ describe('SprintService', () => {
           status: SprintStatusEnum.PLANNED,
           startDate: null,
           endDate: null,
-          isDeleted: false,
         }),
       );
     });

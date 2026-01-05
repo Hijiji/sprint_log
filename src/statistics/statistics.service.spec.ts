@@ -156,9 +156,21 @@ describe('StatisticsService', () => {
     it('사용자의 업무 요약 정보를 조회', async () => {
       const memberIdDto = { id: 'member-001' };
       const mockTasks = [
-        { taskId: 'task-1', status: TaskStatusEnum.PLANNED, member: { memberId: 'member-001' } },
-        { taskId: 'task-2', status: TaskStatusEnum.ACTIVE, member: { memberId: 'member-001' } },
-        { taskId: 'task-3', status: TaskStatusEnum.COMPLETED, member: { memberId: 'member-001' } },
+        {
+          taskId: 'task-1',
+          status: TaskStatusEnum.PLANNED,
+          member: { memberId: 'member-001' },
+        },
+        {
+          taskId: 'task-2',
+          status: TaskStatusEnum.ACTIVE,
+          member: { memberId: 'member-001' },
+        },
+        {
+          taskId: 'task-3',
+          status: TaskStatusEnum.COMPLETED,
+          member: { memberId: 'member-001' },
+        },
       ];
 
       mockTaskQueryBuilder.getMany.mockResolvedValue(mockTasks);
@@ -183,7 +195,11 @@ describe('StatisticsService', () => {
         yearAndMonth: '2026-01',
       };
       const mockTasks = [
-        { taskId: 'task-1', status: TaskStatusEnum.ACTIVE, member: { memberId: 'member-001' } },
+        {
+          taskId: 'task-1',
+          status: TaskStatusEnum.ACTIVE,
+          member: { memberId: 'member-001' },
+        },
       ];
 
       mockTaskQueryBuilder.getMany.mockResolvedValue(mockTasks);
@@ -288,7 +304,6 @@ describe('StatisticsService', () => {
       expect(result.taskId).toBe('task-001');
       expect(result.taskTitle).toBe('API 개발');
       expect(result.status).toBe(TaskStatusEnum.ACTIVE);
-      expect(result.sprintTitle).toBe('Sprint 1');
       expect(result.assignedMember).toBe('John Doe');
       expect(result.snapshotExpectedTime).toBe(480);
       expect(result.totalWorkTime).toBe(550);

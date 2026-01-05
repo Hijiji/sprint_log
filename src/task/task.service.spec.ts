@@ -513,7 +513,7 @@ describe('TaskService', () => {
 
       // Act & Assert
       await expect(service.create(createTaskDto as any)).rejects.toThrow(
-        '종료 예정일은 시작 예정일보다 늦어야 합니다.',
+        '종료일은 시작일보다 늦어야 합니다.',
       );
     });
 
@@ -818,7 +818,7 @@ describe('TaskService', () => {
       // Act & Assert
       const taskIdDto: TaskIdDto = { id: taskId };
       await expect(service.update(taskIdDto, updateTaskDto)).rejects.toThrow(
-        '종료 예정일은 시작 예정일보다 늦어야 합니다.',
+        '종료일은 시작일보다 늦어야 합니다.',
       );
     });
 
