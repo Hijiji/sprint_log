@@ -58,6 +58,10 @@ export class TaskService {
         expectedStartDate: createTaskDto.expectedStartDate || null,
         expectedEndDate: createTaskDto.expectedEndDate || null,
         expectedWorkTime: createTaskDto.expectedWorkTime || 0,
+        snapshotExpectedWorkTime:
+          createTaskDto.status === TaskStatusEnum.ACTIVE
+            ? createTaskDto.expectedWorkTime || 0
+            : 0, // 스냅샷 저장
         startDate:
           createTaskDto.status === TaskStatusEnum.ACTIVE ? new Date() : null,
         endDate:

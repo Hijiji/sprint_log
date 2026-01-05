@@ -43,8 +43,11 @@ export class Task {
   @Column({ type: 'date', nullable: true })
   expectedEndDate: Date;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: 'int', default: 0, nullable: true })
   expectedWorkTime: number;
+
+  @Column({ type: 'int', default: 0, nullable: true })
+  snapshotExpectedWorkTime: number;
 
   @Column({ type: 'date', nullable: true })
   startDate: Date;
