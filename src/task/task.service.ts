@@ -7,7 +7,8 @@ import { Task } from 'src/database/entities/task.entity';
 import { Sprint } from 'src/database/entities/sprint.entity';
 import { Member } from 'src/database/entities/member.entity';
 import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
-import { runInTransaction } from 'src/common/database/transaction.helper';
+import { runInTransaction } from 'src/common/transaction/transaction.helper';
+import { validateDateRange } from 'src/common/utils/date.utils';
 import { TaskCursorMetaDto } from 'src/common/dto/cursor-meta.dto';
 import { TaskIdDto } from './dto/task-id.dto';
 import { WorkLog } from 'src/database/entities/worklog.entity';
@@ -23,15 +24,10 @@ export class TaskService {
    */
   async create(createTaskDto: CreateTaskDto) {
     // 예상 날짜 검증
-    if (createTaskDto.expectedStartDate && createTaskDto.expectedEndDate) {
-      const startDate = new Date(createTaskDto.expectedStartDate);
-      const endDate = new Date(createTaskDto.expectedEndDate);
-      if (startDate > endDate) {
-        throw new BadRequestException(
-          '종료 예정일은 시작 예정일보다 늦어야 합니다.',
-        );
-      }
-    }
+    validateDateRange(
+      createTaskDto.expectedStartDate,
+      createTaskDto.expectedEndDate,
+    );
 
     return runInTransaction(this.dataSource, async (manager) => {
       const taskRepository = manager.getRepository(Task);
@@ -195,15 +191,10 @@ export class TaskService {
       if (!task) throw new BadRequestException('존재하지 않는 업무입니다.');
 
       // 예상 날짜 검증
-      if (updateTaskDto.expectedStartDate && updateTaskDto.expectedEndDate) {
-        const startDate = new Date(updateTaskDto.expectedStartDate);
-        const endDate = new Date(updateTaskDto.expectedEndDate);
-        if (startDate > endDate) {
-          throw new BadRequestException(
-            '종료 예정일은 시작 예정일보다 늦어야 합니다.',
-          );
-        }
-      }
+      validateDateRange(
+        updateTaskDto.expectedStartDate,
+        updateTaskDto.expectedEndDate,
+      );
 
       // 기본 필드 업데이트 (sprintId, memberId 제외)
       if (updateTaskDto.title !== undefined) task.title = updateTaskDto.title;
