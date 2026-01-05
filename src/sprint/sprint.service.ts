@@ -110,7 +110,7 @@ export class SprintService {
   }
 
   /**
-   * 스프린트 상세 조회 (하위 업무목록 포함)
+   * 스프린트 상세 조회 (하위 업무목록, 팀원 포함)
    * @param sprintIdDto
    * @returns
    */
@@ -131,9 +131,16 @@ export class SprintService {
           title: true,
           status: true,
         },
+        sprintManagerLinks: {
+          member: {
+            memberId: true,
+            name: true,
+            email: true,
+          },
+        },
       },
       where: { sprintId: sprintIdDto.id, isDeleted: false },
-      relations: ['tasks'],
+      relations: ['tasks', 'sprintManagerLinks', 'sprintManagerLinks.member'],
     });
 
     if (!sprint) {
