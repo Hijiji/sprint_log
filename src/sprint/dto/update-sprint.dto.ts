@@ -32,21 +32,19 @@ export class UpdateSprintDto {
     example: '2026-01-02',
     description: '스프린트 시작 일자, YYYY-MM-DD 형식의 문자열',
   })
-  @IsString()
   @IsOptional()
   @Matches(/^$|^\d{4}-\d{2}-\d{2}$/)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  startDate: string;
+  startDate: Date;
 
   @ApiProperty({
     example: '2026-02-02',
     description: '스프린트 종료일자, YYYY-MM-DD 형식의 문자열',
   })
-  @IsString()
   @IsOptional()
   @Matches(/^$|^\d{4}-\d{2}-\d{2}$/)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  endDate: string;
+  endDate: Date;
 
   @ApiProperty({
     enum: SprintStatusEnum,

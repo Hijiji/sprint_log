@@ -1,14 +1,17 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import { CreateSprintDto } from './dto/create-sprint.dto';
 import { UpdateSprintDto } from './dto/update-sprint.dto';
 import { FindAllSprintDto } from './dto/find-all-sprint.dto';
 import { SprintStatusEnum } from 'src/common/enum/sprint-status.enum';
-import { runInTransaction } from 'src/common/database/transaction.helper';
+import { runInTransaction } from 'src/common/transaction/transaction.helper';
+import { validateDateRange } from 'src/common/utils/date.utils';
 import { Sprint } from 'src/database/entities/sprint.entity';
 import { PaginationMetaDto } from 'src/common/dto/pagination-meta.dto';
 import { SprintIdDto } from './dto/sprint-id-dto';
+import { Member } from 'src/database/entities/member.entity';
+import { SprintManagerLink } from 'src/database/entities/sprint-manager-links.entity';
 
 @Injectable()
 export class SprintService {
@@ -23,29 +26,52 @@ export class SprintService {
    * @returns
    */
   async create(createSprintDto: CreateSprintDto) {
-    const sprintData = {
-      title: createSprintDto.title,
-      description: createSprintDto.description || '',
-      startDate: createSprintDto.startDate || null,
-      endDate: createSprintDto.endDate || null,
-      status: createSprintDto.status || SprintStatusEnum.PLANNED,
-
-      createdAt: new Date(),
-      isDeleted: false,
-      deletedAt: null,
-    };
-
-    if (sprintData.startDate && sprintData.endDate) {
-      const startDate = new Date(sprintData.startDate);
-      const endDate = new Date(sprintData.endDate);
-      if (startDate > endDate) {
-        throw new BadRequestException('종료일은 시작일보다 늦어야 합니다.');
-      }
-    }
+    // 날짜 검증
+    validateDateRange(createSprintDto.startDate, createSprintDto.endDate);
 
     return runInTransaction(this.dataSource, async (manager) => {
       const sprintRepository = manager.getRepository(Sprint);
-      return sprintRepository.save(sprintData);
+      const memberRepository = manager.getRepository(Member);
+      const sprintManagerLinkRepository =
+        manager.getRepository(SprintManagerLink);
+
+      // Sprint 생성
+      const sprint = sprintRepository.create({
+        title: createSprintDto.title,
+        description: createSprintDto.description || '',
+        startDate: createSprintDto.startDate || null,
+        endDate: createSprintDto.endDate || null,
+        status: createSprintDto.status || SprintStatusEnum.PLANNED,
+      });
+
+      const savedSprint = await sprintRepository.save(sprint);
+
+      // 멤버 할당
+      if (createSprintDto.members && createSprintDto.members.length > 0) {
+        const members = await memberRepository.find({
+          where: { memberId: In(createSprintDto.members.map((id) => id)) },
+        });
+
+        if (members.length !== createSprintDto.members.length) {
+          throw new BadRequestException(
+            '할당된 멤버 중 존재하지 않는 사용자가 있습니다.',
+          );
+        }
+
+        // 일괄 생성
+        const sprintManagerLinks = members.map((member) =>
+          sprintManagerLinkRepository.create({
+            sprint: savedSprint,
+            member,
+          }),
+        );
+
+        await sprintManagerLinkRepository.save(sprintManagerLinks);
+
+        return { sprint: savedSprint, members };
+      }
+
+      return { sprint: savedSprint, members: [] };
     });
   }
 
@@ -119,33 +145,21 @@ export class SprintService {
         throw new BadRequestException('존재하지 않는 스프린트입니다.');
       }
 
-      if (updateSprintDto.startDate && updateSprintDto.endDate) {
-        const startDate = new Date(updateSprintDto.startDate);
-        const endDate = new Date(updateSprintDto.endDate);
-        if (startDate > endDate) {
-          throw new BadRequestException('종료일은 시작일보다 늦어야 합니다.');
-        }
-      }
+      // 날짜 검증
+      validateDateRange(updateSprintDto.startDate, updateSprintDto.endDate);
 
-      const startDate = updateSprintDto.startDate
-        ? new Date(updateSprintDto.startDate)
-        : undefined;
-
-      const endDate = updateSprintDto.endDate
-        ? new Date(updateSprintDto.endDate)
-        : undefined;
-
+      // 필드 업데이트
       if (updateSprintDto.title !== undefined) {
         sprint.title = updateSprintDto.title;
       }
       if (updateSprintDto.description !== undefined) {
         sprint.description = updateSprintDto.description;
       }
-      if (startDate !== undefined) {
-        sprint.startDate = startDate || null;
+      if (updateSprintDto.startDate !== undefined) {
+        sprint.startDate = updateSprintDto.startDate;
       }
       if (updateSprintDto.endDate !== undefined) {
-        sprint.endDate = endDate || null;
+        sprint.endDate = updateSprintDto.endDate;
       }
       if (updateSprintDto.status !== undefined) {
         sprint.status = updateSprintDto.status;
