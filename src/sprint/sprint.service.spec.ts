@@ -318,7 +318,11 @@ describe('SprintService', () => {
       expect(mockSprintRepository.findOne).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { sprintId: 'uuid-1', isDeleted: false },
-          relations: ['tasks', 'sprintManagerLinks', 'sprintManagerLinks.member'],
+          relations: [
+            'tasks',
+            'sprintManagerLinks',
+            'sprintManagerLinks.member',
+          ],
         }),
       );
       expect(result).toEqual(mockSprint);

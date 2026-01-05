@@ -14,7 +14,7 @@ import { CreateSprintDto } from './dto/create-sprint.dto';
 import { UpdateSprintDto } from './dto/update-sprint.dto';
 import { FindAllSprintDto } from './dto/find-all-sprint.dto';
 import { SprintIdDto } from './dto/sprint-id-dto';
-import { AddMemberDto, MemberDto } from './dto/add-member.dto';
+import { MemberDto } from './dto/add-member.dto';
 import { RemoveMemberDto } from './dto/remove-member.dto';
 
 @ApiTags('sprints')
