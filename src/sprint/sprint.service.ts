@@ -110,7 +110,7 @@ export class SprintService {
   }
 
   /**
-   * 스프린트 상세 조회
+   * 스프린트 상세 조회 (하위 업무목록 포함)
    * @param sprintIdDto
    * @returns
    */
@@ -165,22 +165,31 @@ export class SprintService {
       validateDateRange(updateSprintDto.startDate, updateSprintDto.endDate);
 
       // 필드 업데이트
-      if (updateSprintDto.title !== undefined) {
+      if (updateSprintDto.title !== undefined)
         sprint.title = updateSprintDto.title;
-      }
-      if (updateSprintDto.description !== undefined) {
+      if (updateSprintDto.description !== undefined)
         sprint.description = updateSprintDto.description;
-      }
-      if (updateSprintDto.startDate !== undefined) {
+      if (updateSprintDto.startDate !== undefined)
         sprint.startDate = updateSprintDto.startDate;
-      }
-      if (updateSprintDto.endDate !== undefined) {
+      if (updateSprintDto.endDate !== undefined)
         sprint.endDate = updateSprintDto.endDate;
-      }
+
+      // 상태 변경에 따른 날짜 자동 설정
       if (updateSprintDto.status !== undefined) {
+        if (
+          updateSprintDto.status === SprintStatusEnum.ACTIVE &&
+          sprint.status !== SprintStatusEnum.ACTIVE
+        ) {
+          sprint.startDate = new Date();
+        }
+        if (
+          updateSprintDto.status === SprintStatusEnum.COMPLETED &&
+          sprint.status !== SprintStatusEnum.COMPLETED
+        ) {
+          sprint.endDate = new Date();
+        }
         sprint.status = updateSprintDto.status;
       }
-
       return sprintRepository.save(sprint);
     });
   }
@@ -234,7 +243,6 @@ export class SprintService {
 
   /**
    * 스프린트 종료 - status : 완료, endDate: 현재일
-   * todo : 미완료 업무 백로그로 이동
    * @param sprintIdDto
    * @returns
    */
