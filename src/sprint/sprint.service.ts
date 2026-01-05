@@ -14,6 +14,7 @@ import { PaginationMetaDto } from 'src/common/dto/pagination-meta.dto';
 import { SprintIdDto } from './dto/sprint-id-dto';
 import { Member } from 'src/database/entities/member.entity';
 import { SprintManagerLink } from 'src/database/entities/sprint-manager-links.entity';
+import { MemberDto } from './dto/add-member.dto';
 
 @Injectable()
 export class SprintService {
@@ -284,6 +285,89 @@ export class SprintService {
       sprint.status = SprintStatusEnum.COMPLETED;
       sprint.endDate = new Date();
       return sprintRepository.save(sprint);
+    });
+  }
+
+  /**
+   * 스프린트에 사용자 추가
+   * @param sprintIdDto
+   * @param memberId
+   * @returns
+   */
+  async addMember(sprintIdDto: SprintIdDto, memberDto: MemberDto) {
+    return runInTransaction(this.dataSource, async (manager) => {
+      const sprintRepository = manager.getRepository(Sprint);
+      const memberRepository = manager.getRepository(Member);
+      const sprintManagerLinkRepository =
+        manager.getRepository(SprintManagerLink);
+
+      // Sprint 존재 확인
+      const sprint = await sprintRepository.findOne({
+        where: { sprintId: sprintIdDto.id, isDeleted: false },
+      });
+
+      if (!sprint) {
+        throw new BadRequestException(ERROR_MESSAGES.SPRINT_NOT_FOUND);
+      }
+
+      // Member 존재 확인
+      const member = await memberRepository.findOne({
+        where: { memberId: memberDto.memberId },
+      });
+
+      if (!member) {
+        throw new BadRequestException(ERROR_MESSAGES.MEMBER_NOT_FOUND);
+      }
+
+      // 이미 할당된 사용자인지 확인
+      const existingLink = await sprintManagerLinkRepository.findOne({
+        where: {
+          sprint: { sprintId: sprintIdDto.id },
+          member: { memberId: memberDto.memberId },
+        },
+      });
+
+      if (existingLink) {
+        throw new BadRequestException(
+          ERROR_MESSAGES.SPRINT_MEMBER_ALREADY_EXISTS,
+        );
+      }
+
+      // SprintManagerLink 생성
+      const sprintManagerLink = sprintManagerLinkRepository.create({
+        sprint,
+        member,
+      });
+
+      return sprintManagerLinkRepository.save(sprintManagerLink);
+    });
+  }
+
+  /**
+   * 스프린트에서 사용자 제거
+   * @param sprintIdDto
+   * @param memberId
+   * @returns
+   */
+  async removeMember(sprintIdDto: SprintIdDto, memberDto: MemberDto) {
+    return runInTransaction(this.dataSource, async (manager) => {
+      const sprintManagerLinkRepository =
+        manager.getRepository(SprintManagerLink);
+
+      const link = await sprintManagerLinkRepository.findOne({
+        where: {
+          sprint: { sprintId: sprintIdDto.id },
+          member: { memberId: memberDto.memberId },
+        },
+      });
+
+      if (!link) {
+        throw new BadRequestException(
+          ERROR_MESSAGES.SPRINT_MEMBER_NOT_ASSIGNED,
+        );
+      }
+
+      return sprintManagerLinkRepository.remove(link);
     });
   }
 }

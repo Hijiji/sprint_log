@@ -14,6 +14,8 @@ import { CreateSprintDto } from './dto/create-sprint.dto';
 import { UpdateSprintDto } from './dto/update-sprint.dto';
 import { FindAllSprintDto } from './dto/find-all-sprint.dto';
 import { SprintIdDto } from './dto/sprint-id-dto';
+import { AddMemberDto, MemberDto } from './dto/add-member.dto';
+import { RemoveMemberDto } from './dto/remove-member.dto';
 
 @ApiTags('sprints')
 @Controller('sprints')
@@ -61,5 +63,18 @@ export class SprintController {
   @Post(':id/complete')
   sprintComplete(@Param() sprintIdDto: SprintIdDto) {
     return this.sprintService.sprintEnd(sprintIdDto);
+  }
+
+  @Post(':id/members')
+  addMember(@Param() sprintIdDto: SprintIdDto, @Body() memberDto: MemberDto) {
+    return this.sprintService.addMember(sprintIdDto, memberDto);
+  }
+
+  @Delete(':id/members/:memberId')
+  removeMember(
+    @Param() sprintIdDto: SprintIdDto,
+    @Body() memberDto: MemberDto,
+  ) {
+    return this.sprintService.removeMember(sprintIdDto, memberDto);
   }
 }
