@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateWorkLogDto } from './dto/create-work-log.dto';
 import { UpdateWorkLogDto } from './dto/update-work-log.dto';
 import { runInTransaction } from 'src/common/transaction/transaction.helper';
+import { ERROR_MESSAGES } from 'src/common/constants/error-messages';
 import { DataSource } from 'typeorm';
 import { WorkLog } from 'src/database/entities/worklog.entity';
 import { Member } from 'src/database/entities/member.entity';
@@ -168,7 +169,7 @@ export class WorkLogService {
       });
 
       if (!worklog) {
-        throw new BadRequestException('존재하지 않는 업무일지입니다.');
+        throw new BadRequestException(ERROR_MESSAGES.WORKLOG_NOT_FOUND);
       }
       if (updateWorkLogDto.title != undefined)
         worklog.title = updateWorkLogDto.title ?? worklog.title;
@@ -195,7 +196,7 @@ export class WorkLogService {
         where: { workLogId: workLogIdDto.id, isDeleted: false },
       });
       if (!worklog) {
-        throw new BadRequestException('존재하지 않는 업무일지입니다.');
+        throw new BadRequestException(ERROR_MESSAGES.WORKLOG_NOT_FOUND);
       }
       worklog.isDeleted = true;
       worklog.deletedAt = new Date();

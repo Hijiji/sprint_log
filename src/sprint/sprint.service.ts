@@ -7,6 +7,7 @@ import { FindAllSprintDto } from './dto/find-all-sprint.dto';
 import { SprintStatusEnum } from 'src/common/enum/sprint-status.enum';
 import { runInTransaction } from 'src/common/transaction/transaction.helper';
 import { validateDateRange } from 'src/common/utils/date.utils';
+import { ERROR_MESSAGES } from 'src/common/constants/error-messages';
 import { Sprint } from 'src/database/entities/sprint.entity';
 import { Task } from 'src/database/entities/task.entity';
 import { PaginationMetaDto } from 'src/common/dto/pagination-meta.dto';
@@ -54,9 +55,7 @@ export class SprintService {
         });
 
         if (members.length !== createSprintDto.members.length) {
-          throw new BadRequestException(
-            '할당된 멤버 중 존재하지 않는 사용자가 있습니다.',
-          );
+          throw new BadRequestException(ERROR_MESSAGES.SPRINT_MEMBER_NOT_FOUND);
         }
 
         // 일괄 생성
@@ -138,7 +137,7 @@ export class SprintService {
     });
 
     if (!sprint) {
-      throw new BadRequestException('존재하지 않는 스프린트입니다.');
+      throw new BadRequestException(ERROR_MESSAGES.SPRINT_NOT_FOUND);
     }
 
     return sprint;
@@ -159,7 +158,7 @@ export class SprintService {
       });
 
       if (!sprint) {
-        throw new BadRequestException('존재하지 않는 스프린트입니다.');
+        throw new BadRequestException(ERROR_MESSAGES.SPRINT_NOT_FOUND);
       }
 
       // 날짜 검증
@@ -210,7 +209,7 @@ export class SprintService {
       });
 
       if (!sprint) {
-        throw new BadRequestException('존재하지 않는 스프린트입니다.');
+        throw new BadRequestException(ERROR_MESSAGES.SPRINT_NOT_FOUND);
       }
 
       if (removeWithTasks) {
@@ -241,7 +240,7 @@ export class SprintService {
       });
 
       if (!sprint) {
-        throw new BadRequestException('존재하지 않는 스프린트입니다.');
+        throw new BadRequestException(ERROR_MESSAGES.SPRINT_NOT_FOUND);
       }
 
       sprint.status = SprintStatusEnum.ACTIVE;
@@ -266,7 +265,7 @@ export class SprintService {
       });
 
       if (!sprint) {
-        throw new BadRequestException('존재하지 않는 스프린트입니다.');
+        throw new BadRequestException(ERROR_MESSAGES.SPRINT_NOT_FOUND);
       }
 
       // 미완료 업무 백로그로 이동

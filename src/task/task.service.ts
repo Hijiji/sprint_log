@@ -9,6 +9,7 @@ import { Member } from 'src/database/entities/member.entity';
 import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
 import { runInTransaction } from 'src/common/transaction/transaction.helper';
 import { validateDateRange } from 'src/common/utils/date.utils';
+import { ERROR_MESSAGES } from 'src/common/constants/error-messages';
 import { TaskCursorMetaDto } from 'src/common/dto/cursor-meta.dto';
 import { TaskIdDto } from './dto/task-id.dto';
 import { WorkLog } from 'src/database/entities/worklog.entity';
@@ -160,7 +161,7 @@ export class TaskService {
       relations: ['member'],
     });
 
-    if (!task) throw new BadRequestException('존재하지 않는 업무입니다.');
+    if (!task) throw new BadRequestException(ERROR_MESSAGES.TASK_NOT_FOUND);
 
     const worklogs = await worklogRepository.find({
       where: { task: { taskId: taskIdDto.id }, isDeleted: false },
@@ -188,7 +189,7 @@ export class TaskService {
       const task = await taskRepository.findOne({
         where: { taskId: taskIdDto.id, isDeleted: false },
       });
-      if (!task) throw new BadRequestException('존재하지 않는 업무입니다.');
+      if (!task) throw new BadRequestException(ERROR_MESSAGES.TASK_NOT_FOUND);
 
       // 예상 날짜 검증
       validateDateRange(
@@ -233,7 +234,7 @@ export class TaskService {
             where: { sprintId: updateTaskDto.sprintId },
           });
           if (!sprint)
-            throw new BadRequestException('존재하지 않는 스프린트입니다.');
+            throw new BadRequestException(ERROR_MESSAGES.SPRINT_NOT_FOUND);
           task.sprint = sprint;
           task.isBackLog = false;
         } else {
@@ -249,7 +250,7 @@ export class TaskService {
             where: { memberId: updateTaskDto.memberId },
           });
           if (!member)
-            throw new BadRequestException('존재하지 않는 사용자입니다.');
+            throw new BadRequestException(ERROR_MESSAGES.MEMBER_NOT_FOUND);
           task.member = member;
         } else {
           task.member = null;
@@ -272,7 +273,7 @@ export class TaskService {
       const task = await taskRepository.findOne({
         where: { taskId: taskIdDto.id, isDeleted: false },
       });
-      if (!task) throw new BadRequestException('존재하지 않는 업무입니다.');
+      if (!task) throw new BadRequestException(ERROR_MESSAGES.TASK_NOT_FOUND);
 
       if (removeWithWorkLogs) {
         const workLogRepository = manager.getRepository(WorkLog);
@@ -301,13 +302,13 @@ export class TaskService {
       const task = await taskRepository.findOne({
         where: { taskId: taskId, isDeleted: false },
       });
-      if (!task) throw new BadRequestException('존재하지 않는 업무입니다.');
+      if (!task) throw new BadRequestException(ERROR_MESSAGES.TASK_NOT_FOUND);
 
       const sprint = await sprintRepository.findOne({
         where: { sprintId: sprintId, isDeleted: false },
       });
       if (!sprint)
-        throw new BadRequestException('존재하지 않는 스프린트입니다.');
+        throw new BadRequestException(ERROR_MESSAGES.SPRINT_NOT_FOUND);
 
       task.sprint = sprint;
       task.isBackLog = false;
@@ -327,7 +328,7 @@ export class TaskService {
       const task = await taskRepository.findOne({
         where: { taskId: taskIdDto.id, isDeleted: false },
       });
-      if (!task) throw new BadRequestException('존재하지 않는 업무입니다.');
+      if (!task) throw new BadRequestException(ERROR_MESSAGES.TASK_NOT_FOUND);
 
       task.sprint = null;
       task.isBackLog = true;

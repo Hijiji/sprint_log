@@ -315,9 +315,12 @@ describe('SprintService', () => {
       const result = await service.findOne(sprintIdDto);
 
       expect(dataSource.getRepository).toHaveBeenCalledWith(Sprint);
-      expect(mockSprintRepository.findOne).toHaveBeenCalledWith({
-        where: { sprintId: 'uuid-1', isDeleted: false },
-      });
+      expect(mockSprintRepository.findOne).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { sprintId: 'uuid-1', isDeleted: false },
+          relations: ['tasks'],
+        }),
+      );
       expect(result).toEqual(mockSprint);
     });
 

@@ -4,6 +4,7 @@ import { DataSource } from 'typeorm';
 import { Sprint } from 'src/database/entities/sprint.entity';
 import { Task } from 'src/database/entities/task.entity';
 import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
+import { ERROR_MESSAGES } from 'src/common/constants/error-messages';
 import { MemberIdDto } from './dto/member-id.dto';
 import { WorkLog } from 'src/database/entities/worklog.entity';
 import { TaskIdDto } from './dto/task-id.dto';
@@ -159,7 +160,7 @@ export class StatisticsService {
     });
 
     if (!task) {
-      throw new BadRequestException('존재하지 않는 업무입니다.');
+      throw new BadRequestException(ERROR_MESSAGES.TASK_NOT_FOUND);
     }
 
     // WorkLog 합계 조회
