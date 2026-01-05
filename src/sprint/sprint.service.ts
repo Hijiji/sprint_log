@@ -110,14 +110,30 @@ export class SprintService {
   }
 
   /**
-   * 스프린트 단건 조회
+   * 스프린트 상세 조회
    * @param sprintIdDto
    * @returns
    */
   async findOne(sprintIdDto: SprintIdDto) {
     const sprintRepository = this.dataSource.getRepository(Sprint);
     const sprint = await sprintRepository.findOne({
+      select: {
+        sprintId: true,
+        title: true,
+        description: true,
+        startDate: true,
+        endDate: true,
+        status: true,
+        createdAt: true,
+        isDeleted: true,
+        tasks: {
+          taskId: true,
+          title: true,
+          status: true,
+        },
+      },
       where: { sprintId: sprintIdDto.id, isDeleted: false },
+      relations: ['tasks'],
     });
 
     if (!sprint) {
