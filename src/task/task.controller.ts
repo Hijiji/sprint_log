@@ -79,7 +79,8 @@ export class TaskController {
   @Get(':id')
   @ApiOperation({
     summary: '업무 상세 조회',
-    description: '업무의 상세 정보를 조회합니다. 할당된 사용자와 작업 로그를 포함합니다.',
+    description:
+      '업무의 상세 정보를 조회합니다. 할당된 사용자와 작업 로그를 포함합니다.',
   })
   @ApiParam({
     name: 'id',
@@ -120,11 +121,31 @@ export class TaskController {
     return this.taskService.update(taskIdDto, updateTaskDto);
   }
 
+  @Get(':id/has-work-logs')
+  @ApiOperation({
+    summary: '업무에 작업일지 존재 여부 확인',
+  })
+  @ApiParam({
+    name: 'id',
+    description: '업무 ID',
+    example: 'task-001',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '업무에 작업일지 존재 여부를 반환합니다.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: '업무를 찾을 수 없습니다.',
+  })
+  hasWorkLogs(@Param() taskIdDto: TaskIdDto) {
+    return this.taskService.hasWorkLogs(taskIdDto);
+  }
+
   @Delete(':id')
   @ApiOperation({
     summary: '업무 삭제',
-    description:
-      '업무를 soft delete합니다. 작업 로그는 유지됩니다.',
+    description: '업무를 soft delete합니다. 작업 로그는 유지됩니다.',
   })
   @ApiParam({
     name: 'id',

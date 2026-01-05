@@ -263,6 +263,17 @@ export class TaskService {
   }
 
   /**
+   * 업무 하위에 업무 일지있는지 확인
+   */
+  async hasWorkLogs(taskIdDto: TaskIdDto): Promise<boolean> {
+    const workLogRepository = this.dataSource.getRepository(WorkLog);
+    const count = await workLogRepository.count({
+      where: { task: { taskId: taskIdDto.id }, isDeleted: false },
+    });
+    return count > 0;
+  }
+
+  /**
    * 업무 하나 삭제 - soft delete
    * @param taskIdDto
    * @returns
