@@ -68,8 +68,6 @@ export class WorkLogService {
     const limit = findAllWorklogDto.limit ?? defaultLimit;
 
     const workLogRepository = this.dataSource.getRepository(WorkLog);
-    const memberRepository = this.dataSource.getRepository(Member);
-    const taskRepository = this.dataSource.getRepository(Task);
 
     const queryBuilder = workLogRepository
       .createQueryBuilder('worklog')
