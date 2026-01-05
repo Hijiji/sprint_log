@@ -1,6 +1,7 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { StatisticsService } from './statistics.service';
 import { SprintIdDto } from 'src/sprint/dto/sprint-id-dto';
+import { MemberIdDto } from './dto/member-id.dto';
 
 @Controller('statistics')
 export class StatisticsController {
@@ -12,8 +13,8 @@ export class StatisticsController {
   }
 
   @Get('users/:id/summary')
-  findUserSummary(@Param() id: string) {
-    return this.statisticsService.findUserSummary(+id);
+  findUserSummary(@Param() memberIdDto: MemberIdDto) {
+    return this.statisticsService.findUserSummary(memberIdDto);
   }
 
   @Get('tasks/:id/time-tracking')

@@ -4,6 +4,8 @@ import { DataSource } from 'typeorm';
 import { Sprint } from 'src/database/entities/sprint.entity';
 import { Task } from 'src/database/entities/task.entity';
 import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
+import { MemberIdDto } from './dto/member-id.dto';
+import { WorkLog } from 'src/database/entities/worklog.entity';
 
 @Injectable()
 export class StatisticsService {
@@ -70,13 +72,75 @@ export class StatisticsService {
   }
 
   /**
-   * 사용자별 업무처리 현황 : 완료한 업무수, 진행중인 업무수, 할일수, 총업무시간 등 //전체, 월별, 스프린트별
-   * @param userId
+   * 사용자별 업무처리 현황 : 상태별 업무 수, 현재까지 진행된 총업무시간 등 //월별, 전체, 스프린트별
+   * @param memberIdDto
    * @returns
    */
-  async findUserSummary(userId: number) {
-    // 사용자 요약 통계 로직 구현
-    return { message: `User summary data for user ${userId}` };
+  async findUserSummary(memberIdDto: MemberIdDto) {
+    const workLogRepository = this.datasource.getRepository(WorkLog);
+    const worklogQueryBuilder = workLogRepository
+      .createQueryBuilder('worklog')
+      .leftJoin('worklog.member', 'member')
+      .where('member.memberId = :memberId', { memberId: memberIdDto.id });
+
+    const taskRepository = this.datasource.getRepository(Task);
+
+    const taskQueryBuilder = taskRepository
+      .createQueryBuilder('task')
+      .leftJoinAndSelect('task.member', 'member')
+      .leftJoinAndSelect('task.sprint', 'sprint')
+      .where('task.member.memberId = :memberId', { memberId: memberIdDto.id });
+
+    // 년월 필터링 (SQLite strftime 사용)
+    if (memberIdDto.yearAndMonth) {
+      worklogQueryBuilder.andWhere(
+        "strftime('%Y-%m', worklog.workDate) = :yearAndMonth",
+        { yearAndMonth: memberIdDto.yearAndMonth },
+      );
+      taskQueryBuilder.andWhere(
+        "strftime('%Y-%m', task.expectedStartDate) = :yearAndMonth",
+        { yearAndMonth: memberIdDto.yearAndMonth },
+      );
+    }
+
+    // 스프린트 제목 필터링
+    if (memberIdDto.sprintTitle) {
+      taskQueryBuilder.andWhere('sprint.title LIKE :sprintTitle', {
+        sprintTitle: `%${memberIdDto.sprintTitle}%`,
+      });
+    }
+
+    const tasks = await taskQueryBuilder
+      .andWhere('task.isDeleted = :isDeleted', { isDeleted: false })
+      .orderBy('task.expectedStartDate', 'ASC')
+      .getMany();
+
+    // workTime 합산 조회
+    const workTimeResult = await worklogQueryBuilder
+      .andWhere('worklog.isDeleted = :isDeleted', { isDeleted: false })
+      .select('SUM(worklog.workTime)', 'totalWorkTime')
+      .getRawOne();
+
+    // 상태별 집계
+    const statusCounts = {
+      [TaskStatusEnum.PLANNED]: 0,
+      [TaskStatusEnum.ACTIVE]: 0,
+      [TaskStatusEnum.COMPLETED]: 0,
+      [TaskStatusEnum.HOLD]: 0,
+    };
+
+    tasks.forEach((task) => {
+      statusCounts[task.status]++;
+    });
+
+    return {
+      memberId: memberIdDto.id,
+      totalTaskCount: tasks.length,
+      statusCounts,
+      totalWorkTime: parseInt(workTimeResult?.totalWorkTime || '0', 10),
+      periodFilter: memberIdDto.yearAndMonth || 'ALL',
+      selecedMonthWorkTime: parseInt(workTimeResult?.totalWorkTime || '0', 10),
+    };
   }
 
   /**
