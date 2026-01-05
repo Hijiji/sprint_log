@@ -14,7 +14,6 @@ import { PaginationMetaDto } from 'src/common/dto/pagination-meta.dto';
 import { SprintIdDto } from './dto/sprint-id-dto';
 import { Member } from 'src/database/entities/member.entity';
 import { SprintManagerLink } from 'src/database/entities/sprint-manager-links.entity';
-import { MemberDto } from './dto/add-member.dto';
 
 @Injectable()
 export class SprintService {
@@ -294,7 +293,7 @@ export class SprintService {
    * @param memberId
    * @returns
    */
-  async addMember(sprintIdDto: SprintIdDto, memberDto: MemberDto) {
+  async addMember(sprintIdDto: SprintIdDto, memberId: string) {
     return runInTransaction(this.dataSource, async (manager) => {
       const sprintRepository = manager.getRepository(Sprint);
       const memberRepository = manager.getRepository(Member);
@@ -312,7 +311,7 @@ export class SprintService {
 
       // Member 존재 확인
       const member = await memberRepository.findOne({
-        where: { memberId: memberDto.memberId },
+        where: { memberId },
       });
 
       if (!member) {
@@ -323,7 +322,7 @@ export class SprintService {
       const existingLink = await sprintManagerLinkRepository.findOne({
         where: {
           sprint: { sprintId: sprintIdDto.id },
-          member: { memberId: memberDto.memberId },
+          member: { memberId },
         },
       });
 
@@ -349,7 +348,7 @@ export class SprintService {
    * @param memberId
    * @returns
    */
-  async removeMember(sprintIdDto: SprintIdDto, memberDto: MemberDto) {
+  async removeMember(sprintIdDto: SprintIdDto, memberId: string) {
     return runInTransaction(this.dataSource, async (manager) => {
       const sprintManagerLinkRepository =
         manager.getRepository(SprintManagerLink);
@@ -357,7 +356,7 @@ export class SprintService {
       const link = await sprintManagerLinkRepository.findOne({
         where: {
           sprint: { sprintId: sprintIdDto.id },
-          member: { memberId: memberDto.memberId },
+          member: { memberId },
         },
       });
 
