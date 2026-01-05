@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { SprintIdDto } from './dto/sprint-id.dto';
 import { DataSource } from 'typeorm';
 import { Sprint } from 'src/database/entities/sprint.entity';
@@ -6,6 +6,7 @@ import { Task } from 'src/database/entities/task.entity';
 import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
 import { MemberIdDto } from './dto/member-id.dto';
 import { WorkLog } from 'src/database/entities/worklog.entity';
+import { TaskIdDto } from './dto/task-id.dto';
 
 @Injectable()
 export class StatisticsService {
@@ -145,11 +146,46 @@ export class StatisticsService {
 
   /**
    * 업무별 계획 대비 실제 소요시간 분석 // 업무별 예상 vs 실제 시간 분석 (업무 시작시 기록된 예상시간 스냅샷 vs worklog 합계 비교)
-   * @param taskId
+   * @param taskIdDto
    * @returns
    */
-  async findTaskTimeTracking(taskId: number) {
-    // 업무 시간 추적 통계 로직 구현
-    return { message: `Time tracking data for task ${taskId}` };
+  async findTaskTimeTracking(taskIdDto: TaskIdDto) {
+    const taskRepository = this.datasource.getRepository(Task);
+    const worklogRepository = this.datasource.getRepository(WorkLog);
+
+    const task = await taskRepository.findOne({
+      where: { taskId: taskIdDto.id, isDeleted: false },
+      relations: ['worklogs', 'member'],
+    });
+
+    if (!task) {
+      throw new BadRequestException('존재하지 않는 업무입니다.');
+    }
+
+    // WorkLog 합계 조회
+    const worklogResult = await worklogRepository
+      .createQueryBuilder('worklog')
+      .where('worklog.task.taskId = :taskId', { taskId: taskIdDto.id })
+      .andWhere('worklog.isDeleted = :isDeleted', { isDeleted: false })
+      .select('SUM(worklog.workTime)', 'totalWorkTime')
+      .getRawOne();
+
+    const snapshotExpectedTime = task.snapshotExpectedWorkTime;
+    const totalWorkTime = parseInt(worklogResult?.totalWorkTime || '0', 10);
+
+    // 차이 계산
+    const timeDifference = totalWorkTime - snapshotExpectedTime;
+
+    return {
+      taskId: taskIdDto.id,
+      taskTitle: task.title,
+      status: task.status,
+      assignedMember: task.member?.name,
+      snapshotExpectedTime, // 예상 시간 (스냅샷)
+      totalWorkTime, // 실제 시간 (WorkLog 합계)
+      timeDifference, // 차이 (양수: 초과, 음수: 미달)
+      workTimeStatus:
+        timeDifference > 0 ? 'OVER' : timeDifference < 0 ? 'UNDER' : 'EXACT',
+    };
   }
 }

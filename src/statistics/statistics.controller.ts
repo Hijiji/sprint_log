@@ -2,6 +2,8 @@ import { Controller, Get, Param } from '@nestjs/common';
 import { StatisticsService } from './statistics.service';
 import { SprintIdDto } from 'src/sprint/dto/sprint-id-dto';
 import { MemberIdDto } from './dto/member-id.dto';
+import { Member } from 'src/database/entities/member.entity';
+import { TaskIdDto } from './dto/task-id.dto';
 
 @Controller('statistics')
 export class StatisticsController {
@@ -18,7 +20,7 @@ export class StatisticsController {
   }
 
   @Get('tasks/:id/time-tracking')
-  findTaskTimeTracking(@Param() id: string) {
-    return this.statisticsService.findTaskTimeTracking(+id);
+  findTaskTimeTracking(@Param() taskIdDto: TaskIdDto) {
+    return this.statisticsService.findTaskTimeTracking(taskIdDto);
   }
 }
