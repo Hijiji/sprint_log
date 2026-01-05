@@ -45,7 +45,12 @@ export class SprintController {
 
   @Delete(':id')
   remove(@Param() sprintIdDto: SprintIdDto) {
-    return this.sprintService.remove(sprintIdDto);
+    return this.sprintService.remove(sprintIdDto, false);
+  }
+
+  @Delete(':id/tasks')
+  removeWithTasks(@Param() sprintIdDto: SprintIdDto) {
+    return this.sprintService.remove(sprintIdDto, true);
   }
 
   @Post(':id/start')

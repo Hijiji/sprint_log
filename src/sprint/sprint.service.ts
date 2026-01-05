@@ -8,6 +8,7 @@ import { SprintStatusEnum } from 'src/common/enum/sprint-status.enum';
 import { runInTransaction } from 'src/common/transaction/transaction.helper';
 import { validateDateRange } from 'src/common/utils/date.utils';
 import { Sprint } from 'src/database/entities/sprint.entity';
+import { Task } from 'src/database/entities/task.entity';
 import { PaginationMetaDto } from 'src/common/dto/pagination-meta.dto';
 import { SprintIdDto } from './dto/sprint-id-dto';
 import { Member } from 'src/database/entities/member.entity';
@@ -199,9 +200,10 @@ export class SprintService {
    * @param sprintIdDto
    * @returns
    */
-  async remove(sprintIdDto: SprintIdDto) {
+  async remove(sprintIdDto: SprintIdDto, removeWithTasks: boolean) {
     return runInTransaction(this.dataSource, async (manager) => {
       const sprintRepository = manager.getRepository(Sprint);
+      const taskRepository = manager.getRepository(Task);
 
       const sprint = await sprintRepository.findOne({
         where: { sprintId: sprintIdDto.id, isDeleted: false },
@@ -209,6 +211,14 @@ export class SprintService {
 
       if (!sprint) {
         throw new BadRequestException('존재하지 않는 스프린트입니다.');
+      }
+
+      if (removeWithTasks) {
+        // 백로그로 이동
+        await taskRepository.update(
+          { sprint: { sprintId: sprintIdDto.id }, isDeleted: false },
+          { isBackLog: true, sprint: null },
+        );
       }
 
       sprint.isDeleted = true;
@@ -249,6 +259,7 @@ export class SprintService {
   async sprintEnd(sprintIdDto: SprintIdDto) {
     return runInTransaction(this.dataSource, async (manager) => {
       const sprintRepository = manager.getRepository(Sprint);
+      const taskRepository = manager.getRepository(Task);
 
       const sprint = await sprintRepository.findOne({
         where: { sprintId: sprintIdDto.id, isDeleted: false },
@@ -257,6 +268,12 @@ export class SprintService {
       if (!sprint) {
         throw new BadRequestException('존재하지 않는 스프린트입니다.');
       }
+
+      // 미완료 업무 백로그로 이동
+      await taskRepository.update(
+        { sprint: { sprintId: sprintIdDto.id }, isDeleted: false },
+        { isBackLog: true, sprint: null },
+      );
 
       sprint.status = SprintStatusEnum.COMPLETED;
       sprint.endDate = new Date();
