@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateWorkLogDto } from './dto/create-work-log.dto';
 import { UpdateWorkLogDto } from './dto/update-work-log.dto';
-import { runInTransaction } from 'src/common/database/transaction.helper';
+import { runInTransaction } from 'src/common/transaction/transaction.helper';
 import { DataSource } from 'typeorm';
 import { WorkLog } from 'src/database/entities/worklog.entity';
 import { Member } from 'src/database/entities/member.entity';
