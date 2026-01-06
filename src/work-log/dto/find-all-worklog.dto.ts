@@ -19,7 +19,7 @@ export class FindAllWorklogDto extends PaginationDto {
   @ApiProperty({
     example: '담당자명',
     required: false,
-    description: '조회하고픈 담당자 이름',
+    description: '검색/조회하고픈 담당자 이름',
   })
   @IsOptional()
   @IsString()
@@ -30,11 +30,33 @@ export class FindAllWorklogDto extends PaginationDto {
   @ApiProperty({
     example: '업무명',
     required: false,
-    description: '조회하려는 업무 제목',
+    description: '검색/조회하려는 업무 제목',
   })
   @IsOptional()
   @IsString()
   @MaxLength(100)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   taskTitle?: string;
+
+  @ApiProperty({
+    example: '담당자 ID',
+    required: false,
+    description: '필터/조회하고픈 담당자 ID',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  memberId?: string;
+
+  @ApiProperty({
+    example: '업무 ID',
+    required: false,
+    description: '필터/조회하려는 업무 ID',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  taskId?: string;
 }
