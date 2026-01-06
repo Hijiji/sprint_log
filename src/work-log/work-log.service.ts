@@ -27,6 +27,7 @@ export class WorkLogService {
   async create(createWorkLogDto: CreateWorkLogDto) {
     return runInTransaction(this.dataSource, async (manager) => {
       const [task, member] = await Promise.all([
+        //병렬처리
         this.validateTask(manager, createWorkLogDto.taskId),
         this.validateMember(manager, createWorkLogDto.memberId),
       ]);
