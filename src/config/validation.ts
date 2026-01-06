@@ -7,7 +7,7 @@ export const validationSchema = Joi.object({
   APP_NAME: Joi.string().default('sprint-log'),
   APP_PORT: Joi.number().default(3000),
   APP_HOST: Joi.string().default('localhost'),
-  DATABASE_PATH: Joi.string().default('./data/database.sqlite'),
+  DATABASE_PATH: Joi.string().default('./data/assignment.sqlite'),
   LOG_LEVEL: Joi.string()
     .valid('error', 'warn', 'info', 'debug')
     .default('info'),

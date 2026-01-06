@@ -6,7 +6,7 @@ export default () => ({
     env: process.env.NODE_ENV || 'development',
   },
   database: {
-    path: process.env.DATABASE_PATH || './data/database.sqlite',
+    path: process.env.DATABASE_PATH || './data/assignment.sqlite',
   },
   logging: {
     level: process.env.LOG_LEVEL || 'info',
