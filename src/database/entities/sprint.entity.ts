@@ -1,8 +1,14 @@
 import { SprintStatusEnum } from 'src/common/enum/sprint-status.enum';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { SprintManagerLink } from './sprint-manager-links.entity';
 import { Task } from './task.entity';
-import { WorkLog } from './worklog.entity';
 
 @Entity('sprints')
 export class Sprint {
@@ -18,18 +24,17 @@ export class Sprint {
   @Column({ type: 'varchar', length: 100 })
   title: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   description: string;
 
   @Column({ type: 'varchar', length: 50, default: SprintStatusEnum.PLANNED })
   status: SprintStatusEnum;
 
-  @Column({
-    type: 'datetime',
-    default: () => 'CURRENT_TIMESTAMP',
-    update: false,
-  })
+  @CreateDateColumn()
   createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 
   @Column({ type: 'boolean', default: false })
   isDeleted: boolean;

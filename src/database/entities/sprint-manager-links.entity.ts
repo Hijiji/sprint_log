@@ -1,4 +1,9 @@
-import { Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Member } from './member.entity';
 import { Sprint } from './sprint.entity';
 
@@ -10,4 +15,6 @@ export class SprintManagerLink {
   sprint: Sprint;
   @ManyToOne(() => Member, (member) => member.sprintManagerLinks)
   member: Member;
+  @CreateDateColumn()
+  createdAt: Date;
 }

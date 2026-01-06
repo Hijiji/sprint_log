@@ -46,8 +46,8 @@ export class Member {
   )
   sprintManagerLinks: SprintManagerLink[];
 
-  @OneToOne(() => Task, (task) => task.member)
-  task: Task;
+  @OneToMany(() => Task, (task) => task.member)
+  tasks: Task[];
 
   @OneToMany(() => WorkLog, (worklog) => worklog.member)
   workLogs: WorkLog[];

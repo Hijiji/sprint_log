@@ -1,4 +1,11 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Member } from './member.entity';
 import { Task } from './task.entity';
 
@@ -13,8 +20,11 @@ export class WorkLog {
   @Column({ type: 'text', nullable: true })
   contents: string;
 
-  @Column({ type: 'date' })
+  @CreateDateColumn()
   createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 
   @Column({ type: 'int' })
   workTime: number;

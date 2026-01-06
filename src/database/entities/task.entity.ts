@@ -1,11 +1,12 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Member } from './member.entity';
 import { Sprint } from './sprint.entity';
@@ -27,14 +28,10 @@ export class Task {
   @Column({ type: 'varchar', length: 50, default: TaskStatusEnum.PLANNED })
   status: TaskStatusEnum;
 
-  @Column({
-    type: 'datetime',
-    default: () => 'CURRENT_TIMESTAMP',
-    update: false,
-  })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @Column({ type: 'datetime', nullable: true })
+  @UpdateDateColumn()
   updatedAt: Date;
 
   @Column({ type: 'date', nullable: true })
@@ -78,7 +75,7 @@ export class Task {
   @OneToMany(() => WorkLog, (worklog) => worklog.task)
   worklogs: WorkLog[];
 
-  @OneToOne(() => Member, (member) => member.task)
+  @ManyToOne(() => Member, (member) => member.tasks)
   @JoinColumn({ name: 'memberId' })
   member: Member;
 }
