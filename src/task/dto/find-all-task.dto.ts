@@ -46,4 +46,26 @@ export class FindAllTaskDto extends CursorDto {
   @MaxLength(100)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   taskTitle?: string;
+
+  @ApiProperty({
+    example: '담당자 ID',
+    required: false,
+    description: '필터/조회하고픈 담당자 ID',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  memberId?: string;
+
+  @ApiProperty({
+    example: '스프린트 ID',
+    required: false,
+    description: '필터/조회하려는 스프린트 ID',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  sprintId?: string;
 }

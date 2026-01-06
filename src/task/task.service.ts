@@ -32,8 +32,8 @@ export class TaskService {
 
     return runInTransaction(this.dataSource, async (manager) => {
       const [sprint, member] = await Promise.all([
-        this.validateSprintOptional(manager, createTaskDto.sprintId),
-        this.validateMemberOptional(manager, createTaskDto.memberId),
+        this.validateSprint(manager, createTaskDto.sprintId),
+        this.validateMember(manager, createTaskDto.memberId),
       ]);
 
       const taskRepository = manager.getRepository(Task);
@@ -57,12 +57,13 @@ export class TaskService {
   }
 
   /**
-   * Sprint 검증 헬퍼 (필수)
+   * Sprint 검증
    */
   private async validateSprint(
     manager: any,
-    sprintId: string,
-  ): Promise<Sprint> {
+    sprintId?: string,
+  ): Promise<Sprint | null> {
+    if (!sprintId) return null;
     const sprint = await manager.getRepository(Sprint).findOne({
       where: { sprintId },
     });
@@ -73,23 +74,13 @@ export class TaskService {
   }
 
   /**
-   * Sprint 검증 헬퍼 (선택사항)
-   */
-  private async validateSprintOptional(
-    manager: any,
-    sprintId?: string,
-  ): Promise<Sprint | null> {
-    if (!sprintId) return null;
-    return this.validateSprint(manager, sprintId);
-  }
-
-  /**
-   * Member 검증 헬퍼 (필수)
+   * Member 검증
    */
   private async validateMember(
     manager: any,
-    memberId: string,
-  ): Promise<Member> {
+    memberId?: string,
+  ): Promise<Member | null> {
+    if (!memberId) return null;
     const member = await manager.getRepository(Member).findOne({
       where: { memberId },
     });
@@ -97,17 +88,6 @@ export class TaskService {
       throw new BadRequestException(ERROR_MESSAGES.MEMBER_NOT_FOUND);
     }
     return member;
-  }
-
-  /**
-   * Member 검증 헬퍼 (선택사항)
-   */
-  private async validateMemberOptional(
-    manager: any,
-    memberId?: string,
-  ): Promise<Member | null> {
-    if (!memberId) return null;
-    return this.validateMember(manager, memberId);
   }
 
   /**
@@ -123,6 +103,7 @@ export class TaskService {
       .leftJoinAndSelect('task.member', 'member')
       .where('task.isDeleted = :isDeleted', { isDeleted: false });
 
+    //필터, 검색 조건 적용
     this.applyFilters(queryBuilder, findAllTaskDto);
 
     const limit = findAllTaskDto.limit ?? 10;
@@ -161,6 +142,16 @@ export class TaskService {
     if (filters.taskTitle) {
       queryBuilder.andWhere('task.title LIKE :taskTitle', {
         taskTitle: `%${filters.taskTitle}%`,
+      });
+    }
+    if (filters.memberId) {
+      queryBuilder.andWhere('member.memberId = :memberId', {
+        memberId: filters.memberId,
+      });
+    }
+    if (filters.sprintId) {
+      queryBuilder.andWhere('sprint.sprintId = :sprintId', {
+        sprintId: filters.sprintId,
       });
     }
     if (filters.cursor) {
@@ -286,19 +277,13 @@ export class TaskService {
     updates: UpdateTaskDto,
   ): Promise<void> {
     if (updates.sprintId !== undefined) {
-      const sprint = await this.validateSprintOptional(
-        manager,
-        updates.sprintId,
-      );
+      const sprint = await this.validateSprint(manager, updates.sprintId);
       task.sprint = sprint || null;
       task.isBackLog = !sprint;
     }
 
     if (updates.memberId !== undefined) {
-      const member = await this.validateMemberOptional(
-        manager,
-        updates.memberId,
-      );
+      const member = await this.validateMember(manager, updates.memberId);
       task.member = member || null;
     }
   }
