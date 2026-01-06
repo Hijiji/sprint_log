@@ -9,35 +9,27 @@ import {
 } from 'class-validator';
 
 export class MemberStatisticsDto {
-  @ApiProperty({
-    description: '사용자 ID',
-    example: 'mmember-001',
-  })
-  @IsString()
-  @IsNotEmpty()
-  id: string;
+  // @ApiProperty({
+  //   example: '스프린트명',
+  //   required: false,
+  //   description: '조회하려는 스프린트 제목으로 필터링',
+  // })
+  // @IsOptional()
+  // @IsString()
+  // @MaxLength(100)
+  // @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  // sprintTitle?: string;
 
-  @ApiProperty({
-    example: '스프린트명',
-    required: false,
-    description: '조회하려는 스프린트 제목으로 필터링',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  sprintTitle?: string;
-
-  @ApiProperty({
-    example: '스프린트 ID',
-    required: false,
-    description: '필터/조회하려는 스프린트 ID',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  sprintId?: string;
+  // @ApiProperty({
+  //   example: '스프린트 ID',
+  //   required: false,
+  //   description: '필터/조회하려는 스프린트 ID',
+  // })
+  // @IsOptional()
+  // @IsString()
+  // @MaxLength(100)
+  // @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  // sprintId?: string;
 
   @ApiProperty({
     example: '2026-02',

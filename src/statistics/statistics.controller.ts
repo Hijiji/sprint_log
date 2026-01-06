@@ -1,8 +1,7 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { StatisticsService } from './statistics.service';
 import { SprintIdDto } from 'src/sprint/dto/sprint-id-dto';
 import { MemberStatisticsDto } from './dto/member-statistics.dto';
-import { Member } from 'src/database/entities/member.entity';
 import { TaskIdDto } from './dto/task-id.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 
@@ -55,8 +54,11 @@ export class StatisticsController {
     status: 400,
     description: '사용자를 찾을 수 없습니다.',
   })
-  findUserSummary(@Param() memberStatisticsDto: MemberStatisticsDto) {
-    return this.statisticsService.findUserSummary(memberStatisticsDto);
+  findUserSummary(
+    @Param('id') id: string,
+    @Query() memberStatisticsDto: MemberStatisticsDto,
+  ) {
+    return this.statisticsService.findUserSummary(id, memberStatisticsDto);
   }
 
   @Get('tasks/:id/time-tracking')

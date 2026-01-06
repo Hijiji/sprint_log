@@ -78,13 +78,16 @@ export class StatisticsService {
    * @param memberIdDto
    * @returns
    */
-  async findUserSummary(memberStatisticsDto: MemberStatisticsDto) {
+  async findUserSummary(
+    memberId: string,
+    memberStatisticsDto: MemberStatisticsDto,
+  ) {
     const workLogRepository = this.datasource.getRepository(WorkLog);
     const worklogQueryBuilder = workLogRepository
       .createQueryBuilder('worklog')
       .leftJoin('worklog.member', 'member')
       .where('member.memberId = :memberId', {
-        memberId: memberStatisticsDto.id,
+        memberId,
       });
 
     const taskRepository = this.datasource.getRepository(Task);
@@ -94,11 +97,15 @@ export class StatisticsService {
       .leftJoinAndSelect('task.member', 'member')
       .leftJoinAndSelect('task.sprint', 'sprint')
       .where('task.member.memberId = :memberId', {
-        memberId: memberStatisticsDto.id,
+        memberId,
       });
 
     // 년월 필터링 (SQLite strftime 사용)
-    if (memberStatisticsDto.yearAndMonth) {
+    if (
+      memberStatisticsDto.yearAndMonth &&
+      memberStatisticsDto.yearAndMonth.trim() !== ''
+    ) {
+      const yearMonthPattern = `${memberStatisticsDto.yearAndMonth}%`;
       worklogQueryBuilder.andWhere(
         "strftime('%Y-%m', worklog.workDate) = :yearAndMonth",
         { yearAndMonth: memberStatisticsDto.yearAndMonth },
@@ -109,17 +116,17 @@ export class StatisticsService {
       );
     }
 
-    // 스프린트 제목 필터링
-    if (memberStatisticsDto.sprintTitle !== undefined) {
-      taskQueryBuilder.andWhere('sprint.title LIKE :sprintTitle', {
-        sprintTitle: `%${memberStatisticsDto.sprintTitle}%`,
-      });
-    }
-    if (memberStatisticsDto.sprintId !== undefined) {
-      taskQueryBuilder.andWhere('sprint.sprintId = :sprintId', {
-        sprintId: memberStatisticsDto.sprintId,
-      });
-    }
+    // // 스프린트 제목 필터링
+    // if (memberStatisticsDto.sprintTitle !== undefined) {
+    //   taskQueryBuilder.andWhere('sprint.title LIKE :sprintTitle', {
+    //     sprintTitle: `%${memberStatisticsDto.sprintTitle}%`,
+    //   });
+    // }
+    // if (memberStatisticsDto.sprintId !== undefined) {
+    //   taskQueryBuilder.andWhere('sprint.sprintId = :sprintId', {
+    //     sprintId: memberStatisticsDto.sprintId,
+    //   });
+    // }
 
     const tasks = await taskQueryBuilder
       .andWhere('task.isDeleted = :isDeleted', { isDeleted: false })
@@ -145,7 +152,7 @@ export class StatisticsService {
     });
 
     return {
-      memberId: memberStatisticsDto.id,
+      memberId,
       totalTaskCount: tasks.length,
       statusCounts,
       totalWorkTime: parseInt(workTimeResult?.totalWorkTime || '0', 10),
