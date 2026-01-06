@@ -30,18 +30,20 @@ export class WorkLogService {
       const taskRepository = manager.getRepository(Task);
       const memberRepository = manager.getRepository(Member);
 
-      // sprint, member 엔티티 로드
-      const task = createWorkLogDto.taskId
-        ? await taskRepository.findOne({
-            where: { taskId: createWorkLogDto.taskId },
-          })
-        : null;
+      // task, member 엔티티 로드
+      const task = await taskRepository.findOne({
+        where: { taskId: createWorkLogDto.taskId },
+      });
+      if (!task) {
+        throw new BadRequestException(ERROR_MESSAGES.TASK_NOT_FOUND);
+      }
 
-      const member = createWorkLogDto.memberId
-        ? await memberRepository.findOne({
-            where: { memberId: createWorkLogDto.memberId },
-          })
-        : null;
+      const member = await memberRepository.findOne({
+        where: { memberId: createWorkLogDto.memberId },
+      });
+      if (!member) {
+        throw new BadRequestException(ERROR_MESSAGES.MEMBER_NOT_FOUND);
+      }
 
       const worklog = workLogRepository.create({
         title: createWorkLogDto.title,

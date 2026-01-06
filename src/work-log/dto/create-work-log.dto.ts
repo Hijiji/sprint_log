@@ -20,6 +20,7 @@ export class CreateWorkLogDto {
 
   @ApiProperty({
     example: '업무에 대한 설명을 입력하세요.',
+    required: false,
     maxLength: 2000,
   })
   @IsString()
@@ -30,6 +31,7 @@ export class CreateWorkLogDto {
 
   @ApiProperty({
     example: '2026-01-02',
+    required: false,
     description: '업무일, YYYY-MM-DD 형식의 문자열',
   })
   @IsString()
@@ -40,6 +42,7 @@ export class CreateWorkLogDto {
 
   @ApiProperty({
     example: '4',
+    required: false,
     description: '작업시간',
   })
   @IsNumber()
