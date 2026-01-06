@@ -58,7 +58,12 @@ export class Task {
   @Column({ type: 'boolean', default: true })
   isBackLog: boolean;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Column({
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+    default: TaskPriorityEnum.MEDIUM,
+  })
   priority: TaskPriorityEnum;
 
   @Column({ type: 'boolean', default: false })
