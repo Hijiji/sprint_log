@@ -24,37 +24,21 @@ export class TaskService {
    * @returns
    */
   async create(createTaskDto: CreateTaskDto) {
-    // 예상 날짜 검증
+    // 날짜 범위 검증
     validateDateRange(
       createTaskDto.expectedStartDate,
       createTaskDto.expectedEndDate,
     );
 
     return runInTransaction(this.dataSource, async (manager) => {
+      const [sprint, member] = await Promise.all([
+        this.validateSprintOptional(manager, createTaskDto.sprintId),
+        this.validateMemberOptional(manager, createTaskDto.memberId),
+      ]);
+
       const taskRepository = manager.getRepository(Task);
-      const sprintRepository = manager.getRepository(Sprint);
-      const memberRepository = manager.getRepository(Member);
-
-      // sprint, member 엔티티 로드
-      const sprint = createTaskDto.sprintId
-        ? await sprintRepository.findOne({
-            where: { sprintId: createTaskDto.sprintId },
-          })
-        : null;
-
-      const member = createTaskDto.memberId
-        ? await memberRepository.findOne({
-            where: { memberId: createTaskDto.memberId },
-          })
-        : null;
-
       const task = taskRepository.create({
-        title: createTaskDto.title,
-        description: createTaskDto.description,
-        status: createTaskDto.status || TaskStatusEnum.PLANNED,
-        expectedStartDate: createTaskDto.expectedStartDate || null,
-        expectedEndDate: createTaskDto.expectedEndDate || null,
-        expectedWorkTime: createTaskDto.expectedWorkTime || 0,
+        ...createTaskDto,
         snapshotExpectedWorkTime:
           createTaskDto.status === TaskStatusEnum.ACTIVE
             ? createTaskDto.expectedWorkTime || 0
@@ -63,14 +47,67 @@ export class TaskService {
           createTaskDto.status === TaskStatusEnum.ACTIVE ? new Date() : null,
         endDate:
           createTaskDto.status === TaskStatusEnum.COMPLETED ? new Date() : null,
-        priority: createTaskDto.priority || null,
-        isBackLog: !createTaskDto.sprintId, // sprint이 없으면 백로그
+        isBackLog: !sprint, // 스프린트 없으면 백로그
         sprint,
-        member: member,
+        member,
       });
 
       return taskRepository.save(task);
     });
+  }
+
+  /**
+   * Sprint 검증 헬퍼 (필수)
+   */
+  private async validateSprint(
+    manager: any,
+    sprintId: string,
+  ): Promise<Sprint> {
+    const sprint = await manager.getRepository(Sprint).findOne({
+      where: { sprintId },
+    });
+    if (!sprint) {
+      throw new BadRequestException(ERROR_MESSAGES.SPRINT_NOT_FOUND);
+    }
+    return sprint;
+  }
+
+  /**
+   * Sprint 검증 헬퍼 (선택사항)
+   */
+  private async validateSprintOptional(
+    manager: any,
+    sprintId?: string,
+  ): Promise<Sprint | null> {
+    if (!sprintId) return null;
+    return this.validateSprint(manager, sprintId);
+  }
+
+  /**
+   * Member 검증 헬퍼 (필수)
+   */
+  private async validateMember(
+    manager: any,
+    memberId: string,
+  ): Promise<Member> {
+    const member = await manager.getRepository(Member).findOne({
+      where: { memberId },
+    });
+    if (!member) {
+      throw new BadRequestException(ERROR_MESSAGES.MEMBER_NOT_FOUND);
+    }
+    return member;
+  }
+
+  /**
+   * Member 검증 헬퍼 (선택사항)
+   */
+  private async validateMemberOptional(
+    manager: any,
+    memberId?: string,
+  ): Promise<Member | null> {
+    if (!memberId) return null;
+    return this.validateMember(manager, memberId);
   }
 
   /**
@@ -86,50 +123,51 @@ export class TaskService {
       .leftJoinAndSelect('task.member', 'member')
       .where('task.isDeleted = :isDeleted', { isDeleted: false });
 
-    // 필터링
-    if (findAllTaskDto.status) {
-      queryBuilder.andWhere('task.status = :status', {
-        status: findAllTaskDto.status,
-      });
-    }
+    this.applyFilters(queryBuilder, findAllTaskDto);
 
-    if (findAllTaskDto.sprintTitle) {
-      queryBuilder.andWhere('sprint.title LIKE :sprintTitle', {
-        sprintTitle: `%${findAllTaskDto.sprintTitle}%`,
-      });
-    }
-
-    if (findAllTaskDto.memberName) {
-      queryBuilder.andWhere('member.name LIKE :memberName', {
-        memberName: `%${findAllTaskDto.memberName}%`,
-      });
-    }
-
-    if (findAllTaskDto.taskTitle) {
-      queryBuilder.andWhere('task.title LIKE :taskTitle', {
-        taskTitle: `%${findAllTaskDto.taskTitle}%`,
-      });
-    }
-
-    // Cursor 처리
-    if (findAllTaskDto.cursor) {
-      queryBuilder.andWhere('task.taskId > :cursor', {
-        cursor: findAllTaskDto.cursor,
-      });
-    }
-
-    // 정렬 및 조회 (limit + 1)
+    const limit = findAllTaskDto.limit ?? 10;
     const tasks = await queryBuilder
       .orderBy('task.createdAt', 'DESC')
       .addOrderBy('task.taskId', 'DESC')
-      .take(findAllTaskDto.limit + 1)
+      .take(limit + 1)
       .getMany();
 
-    const result = tasks.slice(0, findAllTaskDto.limit);
+    const result = tasks.slice(0, limit);
     return {
       tasks: result,
-      meta: TaskCursorMetaDto.create(tasks, findAllTaskDto.limit),
+      meta: TaskCursorMetaDto.create(tasks, limit),
     };
+  }
+
+  /**
+   * QueryBuilder에 필터 조건 적용
+   */
+  private applyFilters(queryBuilder: any, filters: FindAllTaskDto): void {
+    if (filters.status) {
+      queryBuilder.andWhere('task.status = :status', {
+        status: filters.status,
+      });
+    }
+    if (filters.sprintTitle) {
+      queryBuilder.andWhere('sprint.title LIKE :sprintTitle', {
+        sprintTitle: `%${filters.sprintTitle}%`,
+      });
+    }
+    if (filters.memberName) {
+      queryBuilder.andWhere('member.name LIKE :memberName', {
+        memberName: `%${filters.memberName}%`,
+      });
+    }
+    if (filters.taskTitle) {
+      queryBuilder.andWhere('task.title LIKE :taskTitle', {
+        taskTitle: `%${filters.taskTitle}%`,
+      });
+    }
+    if (filters.cursor) {
+      queryBuilder.andWhere('task.taskId > :cursor', {
+        cursor: filters.cursor,
+      });
+    }
   }
 
   /**
@@ -181,85 +219,88 @@ export class TaskService {
    * @returns
    */
   async update(taskIdDto: TaskIdDto, updateTaskDto: UpdateTaskDto) {
+    validateDateRange(
+      updateTaskDto.expectedStartDate,
+      updateTaskDto.expectedEndDate,
+    );
+
     return runInTransaction(this.dataSource, async (manager) => {
       const taskRepository = manager.getRepository(Task);
-      const sprintRepository = manager.getRepository(Sprint);
-      const memberRepository = manager.getRepository(Member);
-
       const task = await taskRepository.findOne({
         where: { taskId: taskIdDto.id, isDeleted: false },
       });
       if (!task) throw new BadRequestException(ERROR_MESSAGES.TASK_NOT_FOUND);
 
-      // 예상 날짜 검증
-      validateDateRange(
-        updateTaskDto.expectedStartDate,
-        updateTaskDto.expectedEndDate,
-      );
-
-      // 기본 필드 업데이트 (sprintId, memberId 제외)
-      if (updateTaskDto.title !== undefined) task.title = updateTaskDto.title;
-      if (updateTaskDto.description !== undefined)
-        task.description = updateTaskDto.description;
-      if (updateTaskDto.expectedStartDate !== undefined)
-        task.expectedStartDate = updateTaskDto.expectedStartDate || null;
-      if (updateTaskDto.expectedEndDate !== undefined)
-        task.expectedEndDate = updateTaskDto.expectedEndDate || null;
-      if (updateTaskDto.expectedWorkTime !== undefined)
-        task.expectedWorkTime = updateTaskDto.expectedWorkTime;
-      if (updateTaskDto.priority !== undefined)
-        task.priority = updateTaskDto.priority;
-
-      // 상태 변경에 따른 날짜 자동 설정
-      if (updateTaskDto.status !== undefined) {
-        if (
-          updateTaskDto.status === TaskStatusEnum.ACTIVE &&
-          task.status !== TaskStatusEnum.ACTIVE
-        ) {
-          task.startDate = new Date();
-        }
-        if (
-          updateTaskDto.status === TaskStatusEnum.COMPLETED &&
-          task.status !== TaskStatusEnum.COMPLETED
-        ) {
-          task.endDate = new Date();
-        }
-        task.status = updateTaskDto.status;
-      }
-
-      // Sprint 관계 업데이트
-      if (updateTaskDto.sprintId !== undefined) {
-        if (updateTaskDto.sprintId) {
-          const sprint = await sprintRepository.findOne({
-            where: { sprintId: updateTaskDto.sprintId },
-          });
-          if (!sprint)
-            throw new BadRequestException(ERROR_MESSAGES.SPRINT_NOT_FOUND);
-          task.sprint = sprint;
-          task.isBackLog = false;
-        } else {
-          task.sprint = null;
-          task.isBackLog = true;
-        }
-      }
-
-      // Member 관계 업데이트
-      if (updateTaskDto.memberId !== undefined) {
-        if (updateTaskDto.memberId) {
-          const member = await memberRepository.findOne({
-            where: { memberId: updateTaskDto.memberId },
-          });
-          if (!member)
-            throw new BadRequestException(ERROR_MESSAGES.MEMBER_NOT_FOUND);
-          task.member = member;
-        } else {
-          task.member = null;
-        }
-      }
+      this.updateBasicFields(task, updateTaskDto);
+      this.updateStatus(task, updateTaskDto);
+      await this.updateRelations(manager, task, updateTaskDto);
 
       task.updatedAt = new Date();
       return taskRepository.save(task);
     });
+  }
+
+  /**
+   * 기본 필드 업데이트
+   */
+  private updateBasicFields(task: Task, updates: UpdateTaskDto): void {
+    if (updates.title !== undefined) task.title = updates.title;
+    if (updates.description !== undefined)
+      task.description = updates.description;
+    if (updates.expectedStartDate !== undefined)
+      task.expectedStartDate = updates.expectedStartDate || null;
+    if (updates.expectedEndDate !== undefined)
+      task.expectedEndDate = updates.expectedEndDate || null;
+    if (updates.expectedWorkTime !== undefined)
+      task.expectedWorkTime = updates.expectedWorkTime;
+    if (updates.priority !== undefined) task.priority = updates.priority;
+  }
+
+  /**
+   * 상태 변경에 따른 날짜 자동 설정
+   */
+  private updateStatus(task: Task, updates: UpdateTaskDto): void {
+    if (updates.status === undefined) return;
+
+    if (
+      updates.status === TaskStatusEnum.ACTIVE &&
+      task.status !== TaskStatusEnum.ACTIVE
+    ) {
+      task.startDate = new Date();
+    }
+    if (
+      updates.status === TaskStatusEnum.COMPLETED &&
+      task.status !== TaskStatusEnum.COMPLETED
+    ) {
+      task.endDate = new Date();
+    }
+    task.status = updates.status;
+  }
+
+  /**
+   * Sprint, Member 관계 업데이트
+   */
+  private async updateRelations(
+    manager: any,
+    task: Task,
+    updates: UpdateTaskDto,
+  ): Promise<void> {
+    if (updates.sprintId !== undefined) {
+      const sprint = await this.validateSprintOptional(
+        manager,
+        updates.sprintId,
+      );
+      task.sprint = sprint || null;
+      task.isBackLog = !sprint;
+    }
+
+    if (updates.memberId !== undefined) {
+      const member = await this.validateMemberOptional(
+        manager,
+        updates.memberId,
+      );
+      task.member = member || null;
+    }
   }
 
   /**
@@ -276,10 +317,11 @@ export class TaskService {
   /**
    * 업무 하나 삭제 - soft delete
    * @param taskIdDto
+   * @param removeWithWorkLogs
    * @returns
    */
   async remove(taskIdDto: TaskIdDto, removeWithWorkLogs: boolean) {
-    runInTransaction(this.dataSource, async (manager) => {
+    return runInTransaction(this.dataSource, async (manager) => {
       const taskRepository = manager.getRepository(Task);
       const task = await taskRepository.findOne({
         where: { taskId: taskIdDto.id, isDeleted: false },
