@@ -197,7 +197,6 @@ export class TaskService {
       select: ['workLogId', 'title', 'workTime', 'workDate'],
     });
 
-    // task 객체에 worklogs 추가
     task.worklogs = worklogs;
 
     return task;
@@ -222,11 +221,27 @@ export class TaskService {
       });
       if (!task) throw new BadRequestException(ERROR_MESSAGES.TASK_NOT_FOUND);
 
+      // 업데이트할 데이터 추가
       this.updateBasicFields(task, updateTaskDto);
-      this.updateStatus(task, updateTaskDto);
-      await this.updateRelations(manager, task, updateTaskDto);
 
-      task.updatedAt = new Date();
+      // Sprint 관계 업데이트
+      if (updateTaskDto.sprintId) {
+        const sprint = await this.validateSprint(
+          manager,
+          updateTaskDto.sprintId,
+        );
+        task.sprint = sprint;
+        task.isBackLog = !sprint;
+      }
+
+      // Member 관계 업데이트
+      if (updateTaskDto.memberId) {
+        const member = await this.validateMember(
+          manager,
+          updateTaskDto.memberId,
+        );
+        task.member = member;
+      }
       return taskRepository.save(task);
     });
   }
@@ -245,12 +260,7 @@ export class TaskService {
     if (updates.expectedWorkTime !== undefined)
       task.expectedWorkTime = updates.expectedWorkTime;
     if (updates.priority !== undefined) task.priority = updates.priority;
-  }
 
-  /**
-   * 상태 변경에 따른 날짜 자동 설정
-   */
-  private updateStatus(task: Task, updates: UpdateTaskDto): void {
     if (updates.status === undefined) return;
 
     if (
@@ -269,27 +279,7 @@ export class TaskService {
   }
 
   /**
-   * Sprint, Member 관계 업데이트
-   */
-  private async updateRelations(
-    manager: any,
-    task: Task,
-    updates: UpdateTaskDto,
-  ): Promise<void> {
-    if (updates.sprintId !== undefined) {
-      const sprint = await this.validateSprint(manager, updates.sprintId);
-      task.sprint = sprint || null;
-      task.isBackLog = !sprint;
-    }
-
-    if (updates.memberId !== undefined) {
-      const member = await this.validateMember(manager, updates.memberId);
-      task.member = member || null;
-    }
-  }
-
-  /**
-   * 업무 하위에 업무 일지있는지 확인
+   * 업무 하위에 업무일지있는지 확인
    */
   async hasWorkLogs(taskIdDto: TaskIdDto): Promise<boolean> {
     const workLogRepository = this.dataSource.getRepository(WorkLog);
@@ -350,7 +340,6 @@ export class TaskService {
 
       task.sprint = sprint;
       task.isBackLog = false;
-      task.updatedAt = new Date();
       return taskRepository.save(task);
     });
   }
@@ -370,7 +359,6 @@ export class TaskService {
 
       task.sprint = null;
       task.isBackLog = true;
-      task.updatedAt = new Date();
       return taskRepository.save(task);
     });
   }
