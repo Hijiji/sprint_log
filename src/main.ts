@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { HttpAdapterHost } from '@nestjs/core';
+import { DataSource } from 'typeorm';
 import helmet from 'helmet';
 import cors from 'cors';
 import { AppModule } from './app.module';
@@ -10,6 +11,7 @@ import { createLogger } from './common/logger';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { seedInitialData } from './database/seeds/initial-data.seed';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -62,6 +64,16 @@ async function bootstrap() {
       .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('sprint-api-docs', app, document);
+  }
+
+  // 초기 데이터 시드
+  const dataSource = app.get(DataSource);
+  if (dataSource && appConfig.env === 'development') {
+    try {
+      await seedInitialData(dataSource);
+    } catch (error) {
+      logger.error('초기 데이터 삽입 실패', error);
+    }
   }
 
   await app.listen(appConfig.port, appConfig.host, () => {
