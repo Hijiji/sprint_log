@@ -168,35 +168,7 @@ describe('WorkLogService', () => {
       expect(mockWorkLogRepository.save).toHaveBeenCalled();
     });
 
-    it('Task가 없을 때 null로 생성', async () => {
-      // Arrange
-      const createWorkLogDto: CreateWorkLogDto = {
-        title: 'Test WorkLog',
-        contents: 'Test contents',
-        workDate: new Date('2026-01-04'),
-        workTime: 4,
-        memberId: 'member-1',
-      } as CreateWorkLogDto;
-
-      mockTaskRepository.findOne.mockResolvedValue(null);
-      mockMemberRepository.findOne.mockResolvedValue(mockMember);
-
-      const workLogWithoutTask = {
-        ...mockWorkLog,
-        task: null,
-      };
-      mockWorkLogRepository.create.mockReturnValue(workLogWithoutTask);
-      mockWorkLogRepository.save.mockResolvedValue(workLogWithoutTask);
-
-      // Act
-      const result = await service.create(createWorkLogDto);
-
-      // Assert
-      expect(result.task).toBeNull();
-      expect(mockWorkLogRepository.save).toHaveBeenCalled();
-    });
-
-    it('Member가 없을 때 null로 생성', async () => {
+    it('Task가 없을 때 BadRequestException 던짐', async () => {
       // Arrange
       const createWorkLogDto: CreateWorkLogDto = {
         title: 'Test WorkLog',
@@ -204,24 +176,38 @@ describe('WorkLogService', () => {
         workDate: new Date('2026-01-04'),
         workTime: 4,
         taskId: 'task-1',
+        memberId: 'member-1',
+      } as CreateWorkLogDto;
+
+      mockTaskRepository.findOne.mockResolvedValue(null);
+      mockMemberRepository.findOne.mockResolvedValue(mockMember);
+
+      // Act & Assert
+      await expect(service.create(createWorkLogDto)).rejects.toThrow(
+        '존재하지 않는 업무입니다.',
+      );
+      expect(mockWorkLogRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('Member가 없을 때 BadRequestException 던짐', async () => {
+      // Arrange
+      const createWorkLogDto: CreateWorkLogDto = {
+        title: 'Test WorkLog',
+        contents: 'Test contents',
+        workDate: new Date('2026-01-04'),
+        workTime: 4,
+        taskId: 'task-1',
+        memberId: 'member-1',
       } as CreateWorkLogDto;
 
       mockTaskRepository.findOne.mockResolvedValue(mockTask);
       mockMemberRepository.findOne.mockResolvedValue(null);
 
-      const workLogWithoutMember = {
-        ...mockWorkLog,
-        member: null,
-      };
-      mockWorkLogRepository.create.mockReturnValue(workLogWithoutMember);
-      mockWorkLogRepository.save.mockResolvedValue(workLogWithoutMember);
-
-      // Act
-      const result = await service.create(createWorkLogDto);
-
-      // Assert
-      expect(result.member).toBeNull();
-      expect(mockWorkLogRepository.save).toHaveBeenCalled();
+      // Act & Assert
+      await expect(service.create(createWorkLogDto)).rejects.toThrow(
+        '존재하지 않는 사용자입니다.',
+      );
+      expect(mockWorkLogRepository.save).not.toHaveBeenCalled();
     });
 
     it('workTime이 0 이상인지 검증 필요', async () => {
@@ -377,7 +363,7 @@ describe('WorkLogService', () => {
 
       // Assert
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'task.title Like :taskTitle',
+        'task.title LIKE :taskTitle',
         { taskTitle: '%Development%' },
       );
     });
@@ -432,7 +418,7 @@ describe('WorkLogService', () => {
         { memberName: '%John%' },
       );
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'task.title Like :taskTitle',
+        'task.title LIKE :taskTitle',
         { taskTitle: '%Development%' },
       );
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
