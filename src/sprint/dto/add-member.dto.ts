@@ -3,7 +3,7 @@ import { IsNotEmpty, IsString } from 'class-validator';
 
 export class MemberDto {
   @ApiProperty({
-    example: 'member-123',
+    example: 'member-001',
     description: '사용자 ID',
   })
   @IsString()

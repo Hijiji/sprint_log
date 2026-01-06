@@ -153,6 +153,11 @@ export class WorkLogService {
         memberId: filters.memberId,
       });
     }
+    if (filters.team) {
+      queryBuilder.andWhere('member.team = :team', {
+        team: filters.team,
+      });
+    }
     if (filters.taskId) {
       queryBuilder.andWhere('task.taskId = :taskId', {
         taskId: filters.taskId,
@@ -184,7 +189,9 @@ export class WorkLogService {
         where: { workLogId: workLogIdDto.id, isDeleted: false },
         relations: ['member'],
       });
-
+      if (!worklog) {
+        throw new BadRequestException(ERROR_MESSAGES.WORKLOG_NOT_FOUND);
+      }
       return worklog;
     });
   }

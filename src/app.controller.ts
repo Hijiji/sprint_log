@@ -41,7 +41,6 @@ export class AppController {
 
   @Get()
   @ApiOperation({
-    summary: '인사말',
     description: 'API 서버의 기본 응답을 반환합니다.',
   })
   @ApiResponse({
@@ -52,4 +51,3 @@ export class AppController {
     return this.appService.getHello();
   }
 }
-

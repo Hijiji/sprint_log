@@ -221,11 +221,11 @@ export class TaskService {
       });
       if (!task) throw new BadRequestException(ERROR_MESSAGES.TASK_NOT_FOUND);
 
-      // 업데이트할 데이터 추가
+      // 업데이트용 필드 조건별 처리
       this.updateBasicFields(task, updateTaskDto);
 
       // Sprint 관계 업데이트
-      if (updateTaskDto.sprintId) {
+      if (updateTaskDto.sprintId !== undefined) {
         const sprint = await this.validateSprint(
           manager,
           updateTaskDto.sprintId,
@@ -235,7 +235,7 @@ export class TaskService {
       }
 
       // Member 관계 업데이트
-      if (updateTaskDto.memberId) {
+      if (updateTaskDto.memberId !== undefined) {
         const member = await this.validateMember(
           manager,
           updateTaskDto.memberId,

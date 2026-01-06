@@ -80,7 +80,7 @@ export class UpdateTaskDto {
   sprintId: string;
 
   @ApiProperty({
-    example: 'member-456',
+    example: 'member-001',
     description: '사용자 ID',
   })
   @IsString()

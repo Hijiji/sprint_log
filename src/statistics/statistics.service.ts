@@ -5,7 +5,7 @@ import { Sprint } from 'src/database/entities/sprint.entity';
 import { Task } from 'src/database/entities/task.entity';
 import { TaskStatusEnum } from 'src/common/enum/task-status.enum';
 import { ERROR_MESSAGES } from 'src/common/constants/error-messages';
-import { MemberIdDto } from './dto/member-id.dto';
+import { MemberStatisticsDto } from './dto/member-statistics.dto';
 import { WorkLog } from 'src/database/entities/worklog.entity';
 import { TaskIdDto } from './dto/task-id.dto';
 
@@ -78,12 +78,14 @@ export class StatisticsService {
    * @param memberIdDto
    * @returns
    */
-  async findUserSummary(memberIdDto: MemberIdDto) {
+  async findUserSummary(memberStatisticsDto: MemberStatisticsDto) {
     const workLogRepository = this.datasource.getRepository(WorkLog);
     const worklogQueryBuilder = workLogRepository
       .createQueryBuilder('worklog')
       .leftJoin('worklog.member', 'member')
-      .where('member.memberId = :memberId', { memberId: memberIdDto.id });
+      .where('member.memberId = :memberId', {
+        memberId: memberStatisticsDto.id,
+      });
 
     const taskRepository = this.datasource.getRepository(Task);
 
@@ -91,24 +93,31 @@ export class StatisticsService {
       .createQueryBuilder('task')
       .leftJoinAndSelect('task.member', 'member')
       .leftJoinAndSelect('task.sprint', 'sprint')
-      .where('task.member.memberId = :memberId', { memberId: memberIdDto.id });
+      .where('task.member.memberId = :memberId', {
+        memberId: memberStatisticsDto.id,
+      });
 
     // 년월 필터링 (SQLite strftime 사용)
-    if (memberIdDto.yearAndMonth) {
+    if (memberStatisticsDto.yearAndMonth) {
       worklogQueryBuilder.andWhere(
         "strftime('%Y-%m', worklog.workDate) = :yearAndMonth",
-        { yearAndMonth: memberIdDto.yearAndMonth },
+        { yearAndMonth: memberStatisticsDto.yearAndMonth },
       );
       taskQueryBuilder.andWhere(
         "strftime('%Y-%m', task.expectedStartDate) = :yearAndMonth",
-        { yearAndMonth: memberIdDto.yearAndMonth },
+        { yearAndMonth: memberStatisticsDto.yearAndMonth },
       );
     }
 
     // 스프린트 제목 필터링
-    if (memberIdDto.sprintTitle) {
+    if (memberStatisticsDto.sprintTitle !== undefined) {
       taskQueryBuilder.andWhere('sprint.title LIKE :sprintTitle', {
-        sprintTitle: `%${memberIdDto.sprintTitle}%`,
+        sprintTitle: `%${memberStatisticsDto.sprintTitle}%`,
+      });
+    }
+    if (memberStatisticsDto.sprintId !== undefined) {
+      taskQueryBuilder.andWhere('sprint.sprintId = :sprintId', {
+        sprintId: memberStatisticsDto.sprintId,
       });
     }
 
@@ -136,11 +145,11 @@ export class StatisticsService {
     });
 
     return {
-      memberId: memberIdDto.id,
+      memberId: memberStatisticsDto.id,
       totalTaskCount: tasks.length,
       statusCounts,
       totalWorkTime: parseInt(workTimeResult?.totalWorkTime || '0', 10),
-      periodFilter: memberIdDto.yearAndMonth || 'ALL',
+      periodFilter: memberStatisticsDto.yearAndMonth || 'ALL',
       selecedMonthWorkTime: parseInt(workTimeResult?.totalWorkTime || '0', 10),
     };
   }

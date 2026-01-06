@@ -60,7 +60,7 @@ export class CreateSprintDto {
   status: SprintStatusEnum;
 
   @ApiProperty({
-    example: '[member-456,member-789]',
+    example: ['member-001', 'member-002'],
     description: '할당된 사용자 ID 목록',
   })
   @IsOptional()

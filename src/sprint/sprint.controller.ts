@@ -20,8 +20,6 @@ import { CreateSprintDto } from './dto/create-sprint.dto';
 import { UpdateSprintDto } from './dto/update-sprint.dto';
 import { FindAllSprintDto } from './dto/find-all-sprint.dto';
 import { SprintIdDto } from './dto/sprint-id-dto';
-import { MemberDto } from './dto/add-member.dto';
-import { RemoveMemberDto } from './dto/remove-member.dto';
 
 @ApiTags('sprints')
 @Controller('sprints')
@@ -235,11 +233,8 @@ export class SprintController {
     status: 400,
     description: '이미 할당된 팀원이거나 존재하지 않는 팀원입니다.',
   })
-  addMember(
-    @Param() sprintIdDto: SprintIdDto,
-    @Param('memberId') memberId: string,
-  ) {
-    return this.sprintService.addMember(sprintIdDto, memberId);
+  addMember(@Param('id') id: string, @Param('memberId') memberId: string) {
+    return this.sprintService.addMember({ id }, memberId);
   }
 
   @Delete(':id/members/:memberId')
@@ -265,10 +260,7 @@ export class SprintController {
     status: 400,
     description: '스프린트에 할당되지 않은 팀원입니다.',
   })
-  removeMember(
-    @Param() sprintIdDto: SprintIdDto,
-    @Param('memberId') memberId: string,
-  ) {
-    return this.sprintService.removeMember(sprintIdDto, memberId);
+  removeMember(@Param('id') id: string, @Param('memberId') memberId: string) {
+    return this.sprintService.removeMember({ id }, memberId);
   }
 }

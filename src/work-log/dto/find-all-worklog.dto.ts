@@ -50,6 +50,17 @@ export class FindAllWorklogDto extends PaginationDto {
   memberId?: string;
 
   @ApiProperty({
+    example: '팀 명',
+    required: false,
+    description: '필터/조회하고픈 담당자 팀 명',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  team?: string;
+
+  @ApiProperty({
     example: '업무 ID',
     required: false,
     description: '필터/조회하려는 업무 ID',

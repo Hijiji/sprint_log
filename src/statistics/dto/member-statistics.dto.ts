@@ -8,10 +8,10 @@ import {
   MaxLength,
 } from 'class-validator';
 
-export class MemberIdDto {
+export class MemberStatisticsDto {
   @ApiProperty({
     description: '사용자 ID',
-    example: 'member-uuid-123',
+    example: 'mmember-001',
   })
   @IsString()
   @IsNotEmpty()
@@ -27,6 +27,17 @@ export class MemberIdDto {
   @MaxLength(100)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   sprintTitle?: string;
+
+  @ApiProperty({
+    example: '스프린트 ID',
+    required: false,
+    description: '필터/조회하려는 스프린트 ID',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  sprintId?: string;
 
   @ApiProperty({
     example: '2026-02',

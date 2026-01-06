@@ -51,7 +51,7 @@ export class SprintService {
       // 멤버 할당
       if (createSprintDto.members && createSprintDto.members.length > 0) {
         const members = await memberRepository.find({
-          where: { memberId: In(createSprintDto.members.map((id) => id)) },
+          where: { memberId: In(createSprintDto.members) },
         });
 
         if (members.length !== createSprintDto.members.length) {
